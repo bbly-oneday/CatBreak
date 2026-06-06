@@ -20,3 +20,4 @@ DerivedData/
 # CatBreak Git 掐出排除规则
 CLAUDE.md
 docs/
+.codegraph/
