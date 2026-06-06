@@ -6,16 +6,13 @@ import CoreAudio
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
-    private var popover: NSPopover!
+    private var settingsWindow: NSWindow?
     private var timerManager: TimerManager!
     private var monitor: ActiveAppMonitor?
     private var settingsStore: SettingsStore!
 
     // 静音相关：保存静音前每个输出设备的静音状态
     private var muteStatesBeforeBreak: [AudioObjectID: Bool] = [:]
-
-    // 区分左键（popover）和右键（菜单）
-    private var isPopoverVisible = false
 
     // 预警通知是否已发送（避免重复）
     private var warningDelivered: Bool = false
@@ -38,9 +35,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Setup status bar
         setupStatusBar()
 
-        // Setup popover
-        setupPopover()
-
         // Start monitoring
         monitor = ActiveAppMonitor(timerManager: timerManager)
         monitor?.start()
@@ -60,8 +54,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        // 保存统计
-        timerManager.todayStats.save()
         monitor?.stop()
 
         // 如果正在休息中退出，恢复音量
@@ -117,7 +109,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         if event.type == .rightMouseUp {
             let menu = NSMenu()
-            menu.addItem(NSMenuItem(title: "打开设置", action: #selector(togglePopover), keyEquivalent: ""))
+            menu.addItem(NSMenuItem(title: "打开设置", action: #selector(toggleSettingsWindow), keyEquivalent: ""))
             menu.addItem(NSMenuItem.separator())
             menu.addItem(NSMenuItem(title: "退出", action: #selector(quitApp), keyEquivalent: "q"))
             statusItem.menu = menu
@@ -125,29 +117,71 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 self.statusItem.menu = nil
             }
         } else {
-            togglePopover()
+            toggleSettingsWindow()
         }
     }
 
-    private func setupPopover() {
-        popover = NSPopover()
-        popover.contentSize = NSSize(width: 320, height: 680)
-        popover.behavior = .transient
-        popover.animates = true
+    @objc private func toggleSettingsWindow() {
+        if let window = settingsWindow, window.isVisible {
+            window.orderOut(nil)
+            return
+        }
 
+        // 获取状态栏按钮在屏幕上的位置
+        guard let button = statusItem.button,
+              let screen = NSScreen.main else { return }
+
+        let buttonRect = button.window?.convertToScreen(button.convert(button.bounds, to: nil)) ?? .zero
+
+        // 创建窗口
         let contentView = ContentView(timerManager: timerManager, settingsStore: settingsStore)
-        popover.contentViewController = NSHostingController(rootView: contentView)
-    }
+        let hostingView = NSHostingView(rootView: contentView)
 
-    @objc private func togglePopover() {
-        if let button = statusItem.button {
-            if popover.isShown {
-                popover.performClose(nil)
-            } else {
-                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-                popover.contentViewController?.view.window?.makeKey()
-            }
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 320, height: 680),
+                              styleMask: [.borderless],
+                              backing: .buffered,
+                              defer: false)
+        window.contentView = hostingView
+        window.isReleasedWhenClosed = false
+        window.level = .floating
+        window.backgroundColor = .clear
+        window.hasShadow = true
+
+        // 设置窗口圆角
+        window.contentView?.wantsLayer = true
+        window.contentView?.layer?.cornerRadius = 12
+        window.contentView?.layer?.masksToBounds = true
+        window.contentView?.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+
+        // 计算窗口位置：紧贴菜单栏底部，对齐图标
+        let screenFrame = screen.frame
+        let windowWidth: CGFloat = 320
+        let windowHeight: CGFloat = 680
+
+        // 菜单栏高度
+        let menuBarHeight = screenFrame.height - screen.visibleFrame.height - screen.visibleFrame.origin.y
+
+        // 窗口位置：居中对齐按钮，顶部紧贴菜单栏底部
+        // 默认情况下窗口中心对齐按钮中心
+        var x = buttonRect.origin.x + buttonRect.width / 2 - windowWidth / 2
+
+        // 如果右侧空间不足，则向左调整
+        let rightEdge = x + windowWidth
+        let screenRightEdge = screenFrame.origin.x + screenFrame.width
+        if rightEdge > screenRightEdge {
+            x = screenRightEdge - windowWidth - 10
         }
+
+        // 如果左侧空间不足，则从屏幕左侧开始
+        if x < screenFrame.origin.x {
+            x = screenFrame.origin.x + 10
+        }
+        let y = screenFrame.height - menuBarHeight - windowHeight
+
+        window.setFrameOrigin(NSPoint(x: x, y: y))
+        window.makeKeyAndOrderFront(nil)
+
+        settingsWindow = window
     }
 
     @MainActor

@@ -4,279 +4,389 @@ struct ContentView: View {
     @ObservedObject var timerManager: TimerManager
     @ObservedObject var settingsStore: SettingsStore
 
-    @State private var showStats: Bool = false
-
     /// 深色模式检测
     private var isDarkMode: Bool {
         NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
     }
 
     var body: some View {
-        VStack(spacing: 10) {
-            // 标题栏 — 加顶部安全距离
-            HStack(alignment: .center, spacing: 6) {
+        VStack(spacing: 0) {
+            // ===== 顶部区域：品牌标识 =====
+            headerSection
+
+            // ===== 核心区域：计时状态 =====
+            timerSection
+
+            // ===== 设置区域 =====
+            settingsSection
+
+            // ===== 底部操作区域 =====
+            actionSection
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 6)
+        .padding(.bottom, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(isDarkMode ?
+                    Color(red: 0.11, green: 0.11, blue: 0.13) :
+                    Color(red: 0.98, green: 0.98, blue: 0.99))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(isDarkMode ?
+                    Color.white.opacity(0.08) :
+                    Color.black.opacity(0.04), lineWidth: 1)
+        )
+        .frame(width: 320, height: 550)
+    }
+
+    // MARK: - 顶部区域
+    private var headerSection: some View {
+        HStack(spacing: 10) {
+            // 猫咪图标 - 使用渐变色彩
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: isDarkMode ?
+                                [Color.orange.opacity(0.8), Color.orange.opacity(0.6)] :
+                                [Color.orange, Color.orange.opacity(0.8)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 36, height: 36)
                 Image(systemName: "cat.fill")
-                    .font(.title3)
-                    .foregroundColor(isDarkMode ? .orange : .primary)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.white)
+            }
+
+            // 应用名称
+            VStack(alignment: .leading, spacing: 2) {
                 Text("CatBreak")
-                    .font(.headline)
-                    .fontWeight(.bold)
-                Spacer()
-                StatusBadge(state: timerManager.state, isUserAway: timerManager.isUserAway)
-            }
-            .padding(.top, 4) // 额外顶部距离，防止被裁切
-
-            // 预警横幅
-            if timerManager.isWarning {
-                HStack(spacing: 6) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.yellow)
-                    Text("即将休息，请保存工作！")
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.yellow)
-                    Spacer()
-                    Text(formatCountdown(timerManager.secondsToLimit))
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundColor(.yellow)
-                        .monospacedDigit()
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(Color.yellow.opacity(isDarkMode ? 0.15 : 0.1))
-                .cornerRadius(8)
-                .transition(AnyTransition.move(edge: .top).combined(with: .opacity))
-                .animation(.easeInOut(duration: 0.3), value: timerManager.isWarning)
-            }
-
-            Divider()
-
-            // 计时显示
-            VStack(spacing: 4) {
-                Text("本次使用时长")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                let minutes = timerManager.elapsedSeconds / 60
-                let seconds = timerManager.elapsedSeconds % 60
-                Text(String(format: "%02d:%02d", minutes, seconds))
-                    .font(.system(size: 36, weight: .bold, design: .monospaced))
-                    .foregroundColor(timerManager.state == .breaking ? .red : (timerManager.isWarning ? .yellow : .primary))
-
-                // 暂停休息事件状态指示
-                if timerManager.isInSensitiveApp && timerManager.state == .monitoring {
-                    HStack(spacing: 4) {
-                        Image(systemName: "exclamationmark.shield.fill")
-                            .font(.caption2)
-                            .foregroundColor(.orange)
-                        Text(timerManager.sensitiveAppReason ?? "检测到暂停休息事件")
-                            .font(.caption2)
-                            .foregroundColor(.orange)
-                            .lineLimit(1)
-                    }
-                    .padding(.top, 2)
-                }
-            }
-            .padding(.vertical, 6)
-
-            // 进度条
-            let progress = min(max(Double(timerManager.elapsedSeconds) / Double(settingsStore.usageLimitSeconds), 0), 1.0)
-            ProgressView(value: progress)
-                .tint(timerManager.state == .breaking ? .red : (timerManager.isWarning ? .yellow : (timerManager.state == .paused ? .gray : .blue)))
-
-            HStack {
-                Text("\(Int(progress * 100))% / 限额")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                Spacer()
-                if timerManager.state == .monitoring || timerManager.isWarning {
-                    Text("剩余 \(formatCountdown(timerManager.secondsToLimit))")
-                        .font(.caption2)
-                        .foregroundColor(timerManager.isWarning ? .yellow : .secondary)
-                }
-            }
-
-            Divider()
-
-            // 设置
-            VStack(spacing: 10) {
-                TimeSlider(
-                    title: "使用时长限额",
-                    value: $settingsStore.usageLimitSeconds,
-                    range: 60...7200,
-                    step: 30
-                )
-
-                TimeSlider(
-                    title: "休息时长",
-                    value: $settingsStore.breakDurationSeconds,
-                    range: 10...1200,
-                    step: 10
-                )
-
-                // 静音 + 开机自启动 + 退出
-                HStack(spacing: 0) {
-                    // 休息静音 — 竖排两行
-                    Toggle(isOn: $settingsStore.muteOnBreak) {
-                        VStack(spacing: 1) {
-                            Image(systemName: "speaker.slash.fill")
-                                .font(.caption)
-                            Text("休息\n静音")
-                                .font(.caption)
-                                .multilineTextAlignment(.center)
-                                .lineLimit(2)
-                                .fixedSize()
-                        }
-                    }
-                    .toggleStyle(.switch)
-
-                    Spacer()
-
-                    // 开机自启动 — 竖排两行
-                    Toggle(isOn: $settingsStore.launchAtLogin) {
-                        VStack(spacing: 1) {
-                            Image(systemName: "power")
-                                .font(.caption)
-                            Text("开机\n自启动")
-                                .font(.caption)
-                                .multilineTextAlignment(.center)
-                                .lineLimit(2)
-                                .fixedSize()
-                        }
-                    }
-                    .toggleStyle(.switch)
-
-                    Spacer()
-
-                    // 退出 — 加大加粗更醒目
-                    Button(action: {
-                        NSApplication.shared.terminate(nil)
-                    }) {
-                        HStack(spacing: 5) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 14))
-                            Text("退出")
-                                .font(.system(size: 13, weight: .semibold))
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.red.opacity(0.1))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.red.opacity(0.3), lineWidth: 1)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundColor(.black)
-                }
-
-                Divider()
-
-                // 暂停休息事件监测
-                HStack(spacing: 6) {
-                    Image(systemName: "exclamationmark.shield.fill")
-                        .font(.caption)
-                        .foregroundColor(.orange)
-                    Text("暂停休息事件监测")
-                        .font(.caption)
-                        .foregroundColor(.primary)
-                    Spacer()
-                    Circle()
-                        .fill(timerManager.isInSensitiveApp ? Color.orange : Color.green)
-                        .frame(width: 8, height: 8)
-                    Text(timerManager.isInSensitiveApp ? "有" : "无")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.vertical, 6)
-                .padding(.horizontal, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.orange.opacity(0.06))
-                )
-
-                Divider()
-
-                // 每日统计 — 可展开
-                VStack(spacing: 0) {
-                    Button(action: {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            showStats.toggle()
-                        }
-                    }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: showStats ? "chevron.down" : "chevron.right")
-                                .font(.system(size: 10, weight: .semibold))
-                                .foregroundColor(.secondary)
-                                .frame(width: 12)
-                            Image(systemName: "chart.bar.fill")
-                                .font(.caption)
-                                .foregroundColor(.blue)
-                            Text("今日统计")
-                                .font(.caption)
-                                .foregroundColor(.primary)
-                            Spacer()
-                        }
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 6)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-
-                    if showStats {
-                        VStack(spacing: 6) {
-                            HStack {
-                                Label("使用时长", systemImage: "clock.fill")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                                Text(timerManager.todayStats.formattedTotalUsage)
-                                    .font(.caption2)
-                                    .fontWeight(.medium)
-                            }
-                            HStack {
-                                Label("休息次数", systemImage: "cup.and.saucer.fill")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                                Text("\(timerManager.todayStats.breakCount) 次")
-                                    .font(.caption2)
-                                    .fontWeight(.medium)
-                            }
-                            HStack {
-                                Label("跳过/推迟", systemImage: "forward.fill")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                                Text("\(timerManager.todayStats.skippedCount) 次")
-                                    .font(.caption2)
-                                    .fontWeight(.medium)
-                            }
-                            HStack {
-                                Label("最长连续", systemImage: "flame.fill")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                Spacer()
-                                Text(timerManager.todayStats.formattedLongestContinuous)
-                                    .font(.caption2)
-                                    .fontWeight(.medium)
-                            }
-                        }
-                        .padding(.top, 2)
-                        .padding(.leading, 18)
-                    }
-                }
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .foregroundColor(isDarkMode ? .white : .primary)
+                Text("健康休息提醒")
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundColor(isDarkMode ? .white.opacity(0.5) : .secondary)
             }
 
             Spacer()
+
+            // 状态徽章 - 增强视觉效果
+            StatusBadge(state: timerManager.state, isUserAway: timerManager.isUserAway, isDarkMode: isDarkMode)
         }
-        .padding(.horizontal, 14)
-        .padding(.top, 18)     // 顶部加大内边距，避免图标被裁切
-        .padding(.bottom, 14)
-        .frame(width: 300, height: 520)
+        .padding(.bottom, 8)
+    }
+
+    // MARK: - 计时区域
+    private var timerSection: some View {
+        VStack(spacing: 6) {
+            // 预警横幅 - 优化视觉效果
+            if timerManager.isWarning {
+                warningBanner
+            }
+
+            // 计时卡片 - 主要视觉焦点
+            VStack(spacing: 6) {
+                Text("本次使用时长")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(isDarkMode ? .white.opacity(0.6) : .secondary)
+
+                // 大时钟显示
+                let minutes = timerManager.elapsedSeconds / 60
+                let seconds = timerManager.elapsedSeconds % 60
+
+                Text(String(format: "%02d:%02d", minutes, seconds))
+                    .font(.system(size: 42, weight: .bold, design: .rounded))
+                    .foregroundColor(timerColor)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(timerColor.opacity(0.1))
+                    )
+
+                // 进度条 - 增强视觉反馈
+                progressBar
+            }
+            .padding(.vertical, 6)
+        }
+        .padding(.bottom, 4)
+    }
+
+    // MARK: - 预警横幅
+    private var warningBanner: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.orange)
+
+            Text("即将休息")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.orange)
+
+            Spacer()
+
+            Text(formatCountdown(timerManager.secondsToLimit))
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundColor(.orange)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.orange.opacity(isDarkMode ? 0.15 : 0.08))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+        )
+    }
+
+    // MARK: - 进度条
+    private var progressBar: some View {
+        VStack(spacing: 6) {
+            // 自定义进度条
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    // 背景
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.06))
+                        .frame(height: 12)
+
+                    // 进度 - 颜色随进度加深
+                    let progress = min(max(Double(timerManager.elapsedSeconds) / Double(settingsStore.usageLimitSeconds), 0), 1.0)
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(
+                            LinearGradient(
+                                colors: progressColorGradient(for: progress),
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: geometry.size.width * progress, height: 12)
+                }
+            }
+            .frame(height: 12)
+
+            // 进度信息
+            HStack {
+                let progress = min(max(Double(timerManager.elapsedSeconds) / Double(settingsStore.usageLimitSeconds), 0), 1.0)
+                Text("\(Int(progress * 100))%")
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundColor(isDarkMode ? .white.opacity(0.5) : .secondary)
+
+                Spacer()
+
+                if timerManager.state == .monitoring || timerManager.isWarning {
+                    HStack(spacing: 4) {
+                        Image(systemName: "clock")
+                            .font(.system(size: 10))
+                        Text("剩余 \(formatCountdown(timerManager.secondsToLimit))")
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                    }
+                    .foregroundColor(timerManager.isWarning ? .orange : (isDarkMode ? .white.opacity(0.5) : .secondary))
+                }
+            }
+        }
+    }
+
+    // MARK: - 设置区域
+    private var settingsSection: some View {
+        VStack(spacing: 16) {
+            // 分隔线
+            Divider()
+                .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.06))
+
+            // 使用时长限额
+            TimeSlider(
+                title: "使用时长限额",
+                value: $settingsStore.usageLimitSeconds,
+                range: 60...7200,
+                step: 30,
+                isDarkMode: isDarkMode,
+                accentColor: .blue
+            )
+
+            // 休息时长
+            TimeSlider(
+                title: "休息时长",
+                value: $settingsStore.breakDurationSeconds,
+                range: 10...1200,
+                step: 10,
+                isDarkMode: isDarkMode,
+                accentColor: .mint
+            )
+
+            // 暂停事件监测卡片
+            sensitiveAppCard
+        }
+        .padding(.bottom, 8)
+    }
+
+    // MARK: - 暂停事件监测卡片
+    private var sensitiveAppCard: some View {
+        HStack(spacing: 10) {
+            // 图标
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(timerManager.isInSensitiveApp ?
+                        Color.orange.opacity(0.2) :
+                        (isDarkMode ? Color.white.opacity(0.08) : Color.blue.opacity(0.1)))
+                    .frame(width: 32, height: 32)
+                Image(systemName: "shield.fill")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(timerManager.isInSensitiveApp ? .orange : .blue)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("暂停休息事件监测")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(isDarkMode ? .white.opacity(0.8) : .primary)
+                Text("会议/通话时自动推迟")
+                    .font(.system(size: 11))
+                    .foregroundColor(isDarkMode ? .white.opacity(0.4) : .secondary)
+            }
+
+            Spacer()
+
+            // 状态指示
+            if timerManager.isInSensitiveApp {
+                Text("推迟休息")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.orange)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(
+                        Capsule()
+                            .fill(Color.orange.opacity(isDarkMode ? 0.2 : 0.12))
+                    )
+            } else {
+                VStack(alignment: .trailing, spacing: 4) {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 10, height: 10)
+                    Text("正常")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.green)
+                }
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(isDarkMode ? Color.white.opacity(0.04) : Color.black.opacity(0.02))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(timerManager.isInSensitiveApp ?
+                    Color.orange.opacity(0.3) :
+                    (isDarkMode ? Color.white.opacity(0.08) : Color.blue.opacity(0.15)),
+                    lineWidth: 1)
+        )
+    }
+
+    // MARK: - 底部操作区域
+    private var actionSection: some View {
+        VStack(spacing: 8) {
+            Divider()
+                .background(isDarkMode ? Color.white.opacity(0.1) : Color.black.opacity(0.06))
+
+            // 三个圆形按钮并排
+            HStack(spacing: 24) {
+                // 休息静音开关
+                VStack(spacing: 6) {
+                    ZStack {
+                        Circle()
+                            .fill(settingsStore.muteOnBreak ?
+                                Color.purple.opacity(0.2) :
+                                (isDarkMode ? Color.white.opacity(0.08) : Color.black.opacity(0.04)))
+                            .frame(width: 32, height: 32)
+                        Image(systemName: settingsStore.muteOnBreak ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(settingsStore.muteOnBreak ? .purple : (isDarkMode ? .white.opacity(0.6) : .secondary))
+                    }
+                    Text("休息静音")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(isDarkMode ? .white.opacity(0.7) : .primary)
+                }
+                .frame(width: 70)
+                .onTapGesture {
+                    settingsStore.muteOnBreak.toggle()
+                }
+
+                // 开机自启动开关
+                VStack(spacing: 6) {
+                    ZStack {
+                        Circle()
+                            .fill(settingsStore.launchAtLogin ?
+                                Color.indigo.opacity(0.2) :
+                                (isDarkMode ? Color.white.opacity(0.08) : Color.black.opacity(0.04)))
+                            .frame(width: 32, height: 32)
+                        Image(systemName: "power")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(settingsStore.launchAtLogin ? .indigo : (isDarkMode ? .white.opacity(0.6) : .secondary))
+                    }
+                    Text("开机自启")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(isDarkMode ? .white.opacity(0.7) : .primary)
+                }
+                .frame(width: 70)
+                .onTapGesture {
+                    settingsStore.launchAtLogin.toggle()
+                }
+
+                // 退出按钮 - 圆形带叉
+                VStack(spacing: 6) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.red.opacity(0.15))
+                            .frame(width: 32, height: 32)
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.red)
+                    }
+                    Text("退出")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(isDarkMode ? .white.opacity(0.7) : .primary)
+                }
+                .frame(width: 70)
+                .onTapGesture {
+                    NSApplication.shared.terminate(nil)
+                }
+            }
+        }
+    }
+
+    // MARK: - 辅助计算属性
+
+    /// 计时器颜色
+    private var timerColor: Color {
+        switch timerManager.state {
+        case .breaking: return .red
+        case .warning: return .orange
+        case .paused: return isDarkMode ? .white.opacity(0.4) : .gray
+        default: return isDarkMode ? .white : .primary
+        }
+    }
+
+    /// 进度条渐变色 - 根据进度深度变化
+    private func progressColorGradient(for progress: Double) -> [Color] {
+        // 基础颜色根据状态确定
+        let baseColor: Color
+        switch timerManager.state {
+        case .breaking: baseColor = .red
+        case .warning: baseColor = .orange
+        case .paused: baseColor = isDarkMode ? .white.opacity(0.5) : .gray
+        default: baseColor = .blue
+        }
+
+        // 根据进度调整深度：进度越大，颜色越深
+        let intensity = 0.4 + progress * 0.5  // 0.4 ~ 0.9
+        return [baseColor.opacity(intensity * 0.7), baseColor.opacity(intensity)]
     }
 
     private func formatCountdown(_ seconds: Int) -> String {
@@ -286,31 +396,45 @@ struct ContentView: View {
     }
 }
 
+// MARK: - 状态徽章（优化版）
 struct StatusBadge: View {
     let state: TimerState
     var isUserAway: Bool = false
+    var isDarkMode: Bool = false
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 6) {
+            // 状态指示点 - 增加动画效果
             Circle()
                 .fill(statusColor)
-                .frame(width: 8, height: 8)
+                .frame(width: 10, height: 10)
+                .overlay(
+                    Circle()
+                        .stroke(statusColor.opacity(0.3), lineWidth: 2)
+                        .frame(width: 14, height: 14)
+                )
+
             Text(statusText)
-                .font(.caption2)
-                .fontWeight(.medium)
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(statusColor.opacity(0.15))
-        .cornerRadius(8)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            Capsule()
+                .fill(statusColor.opacity(isDarkMode ? 0.2 : 0.12))
+        )
+        .overlay(
+            Capsule()
+                .stroke(statusColor.opacity(0.3), lineWidth: 1)
+        )
     }
 
     private var statusColor: Color {
         switch state {
-        case .idle: return .gray
+        case .idle: return isDarkMode ? .gray : .gray
         case .monitoring: return .green
-        case .paused: return .blue
-        case .warning: return .yellow
+        case .paused: return .cyan
+        case .warning: return .orange
         case .breaking: return .red
         }
     }

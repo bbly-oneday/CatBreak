@@ -13,6 +13,11 @@ struct CatOverlayView: View {
         NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
     }
 
+    /// 是否处于最后10秒
+    private var isLastTenSeconds: Bool {
+        state.remainingSeconds <= 10 && state.remainingSeconds > 0
+    }
+
     /// 预加载背景图片
     private static let cachedBackgroundImage: NSImage? = {
         if let path = Bundle.main.path(forResource: "catbreak", ofType: "jpg") {
@@ -101,10 +106,10 @@ struct CatOverlayView: View {
                     .lineSpacing(6)
                     .padding(.horizontal, 48)
 
-                // 主标题
-                Text("该休息啦")
+                // 主标题 - 最后10秒时改为"马上结束"
+                Text(isLastTenSeconds ? "马上结束" : "该休息啦")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(isLastTenSeconds ? .yellow.opacity(0.9) : .white.opacity(0.8))
 
                 Spacer()
 
@@ -112,29 +117,29 @@ struct CatOverlayView: View {
                 VStack(spacing: 8) {
                     Text("休息倒计时")
                         .font(.system(size: 14, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.4))
+                        .foregroundColor(isLastTenSeconds ? .yellow.opacity(0.6) : .white.opacity(0.4))
 
                     Text(formatTime(state.remainingSeconds))
                         .font(.system(size: 48, weight: .bold, design: .monospaced))
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(isLastTenSeconds ? .yellow : .white.opacity(0.7))
                         .padding(.horizontal, 36)
                         .padding(.vertical, 10)
                         .background(
                             RoundedRectangle(cornerRadius: 18)
-                                .fill(Color.white.opacity(0.06))
+                                .fill(isLastTenSeconds ? Color.yellow.opacity(0.15) : Color.white.opacity(0.06))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 18)
-                                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                        .stroke(isLastTenSeconds ? Color.yellow.opacity(0.4) : Color.white.opacity(0.1), lineWidth: 1)
                                 )
                         )
                 }
 
                 Spacer()
 
-                // 底部提示
-                Text("喝杯水  ·  站起来  ·  看远方  ·  想想未来")
+                // 底部提示 - 最后10秒时改为提醒文字
+                Text(isLastTenSeconds ? "休息时间即将结束，准备继续工作" : "喝杯水  ·  站起来  ·  看远方  ·  想想未来")
                     .font(.system(size: 16, weight: .medium, design: .rounded))
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundColor(isLastTenSeconds ? .yellow.opacity(0.5) : .white.opacity(0.35))
                     .padding(.bottom, 30)
             }
             .padding(44)

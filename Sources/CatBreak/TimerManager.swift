@@ -40,12 +40,8 @@ class TimerManager: ObservableObject {
     private var lastInputTime: Date = Date()
     private var wentAwayTime: Date?
 
-    // MARK: - 每日统计
-    @Published var todayStats: DailyStats = DailyStats()
-
     init(settingsStore: SettingsStore) {
         self.settingsStore = settingsStore
-        self.todayStats = DailyStats.loadToday()
     }
 
     /// 检测麦克风是否正在使用
@@ -103,8 +99,6 @@ class TimerManager: ObservableObject {
 
         if state == .monitoring || state == .warning {
             elapsedSeconds += 1
-            // 累计使用时长
-            todayStats.totalUsageSeconds += 1
 
             // 持续检测麦克风状态（每10秒检测一次）
             if elapsedSeconds % 10 == 0 {
@@ -145,14 +139,10 @@ class TimerManager: ObservableObject {
         isInSensitiveApp = false
         isWarning = false
         lastInputTime = Date()
-        todayStats.longestContinuousSeconds = max(todayStats.longestContinuousSeconds, 0)
     }
 
     private func startBreak() {
         Logger.timer.info("startBreak: Starting break, elapsedSeconds=\(self.elapsedSeconds)")
-        // 记录本次连续使用时长
-        todayStats.longestContinuousSeconds = max(todayStats.longestContinuousSeconds, elapsedSeconds)
-        todayStats.breakCount += 1
 
         state = .breaking
         isWarning = false
@@ -178,7 +168,6 @@ class TimerManager: ObservableObject {
             let result = SensitiveAppDetector.checkActive()
             if result.isActive {
                 sensitiveAppReason = result.reason
-                todayStats.skippedCount += 1
                 endBreak()
             }
         }
@@ -200,9 +189,6 @@ class TimerManager: ObservableObject {
         isInSensitiveApp = false
         isWarning = false
         lastInputTime = Date()
-
-        // 持久化统计
-        todayStats.save()
 
         onBreakEnded?()
     }
@@ -227,80 +213,5 @@ class TimerManager: ObservableObject {
     // MARK: - 距限额剩余秒数（用于预警显示）
     var secondsToLimit: Int {
         return max(0, settingsStore.usageLimitSeconds - elapsedSeconds)
-    }
-}
-
-// MARK: - 每日统计模型
-
-struct DailyStats: Codable {
-    var date: String = ""               // yyyy-MM-dd
-    var totalUsageSeconds: Int = 0      // 今日使用总时长
-    var breakCount: Int = 0             // 休息次数
-    var skippedCount: Int = 0           // 跳过/推迟次数
-    var longestContinuousSeconds: Int = 0  // 最长连续使用时长
-
-    private static let statsKey = "CatBreak.DailyStats"
-    private static let statsDateKey = "CatBreak.DailyStatsDate"
-
-    static func loadToday() -> DailyStats {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        let today = formatter.string(from: Date())
-
-        let defaults = UserDefaults.standard
-        let savedDate = defaults.string(forKey: statsDateKey)
-
-        // 如果是今天的数据，加载；否则新建
-        if savedDate == today,
-           let data = defaults.data(forKey: statsKey),
-           let stats = try? JSONDecoder().decode(DailyStats.self, from: data) {
-            return stats
-        }
-
-        return DailyStats(date: today)
-    }
-
-    func save() {
-        let defaults = UserDefaults.standard
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        let today = formatter.string(from: Date())
-
-        // 如果日期变了，重置统计
-        var toSave = self
-        if toSave.date != today {
-            toSave = DailyStats(date: today)
-        }
-
-        if let data = try? JSONEncoder().encode(toSave) {
-            defaults.set(data, forKey: Self.statsKey)
-            defaults.set(today, forKey: Self.statsDateKey)
-        }
-    }
-
-    var totalUsageMinutes: Int {
-        totalUsageSeconds / 60
-    }
-
-    var longestContinuousMinutes: Int {
-        longestContinuousSeconds / 60
-    }
-
-    var formattedTotalUsage: String {
-        let h = totalUsageSeconds / 3600
-        let m = (totalUsageSeconds % 3600) / 60
-        if h > 0 {
-            return "\(h)小时\(m)分钟"
-        }
-        return "\(m)分钟"
-    }
-
-    var formattedLongestContinuous: String {
-        let h = longestContinuousSeconds / 3600
-        let m = (longestContinuousSeconds % 3600) / 60
-        if h > 0 {
-            return "\(h)小时\(m)分钟"
-        }
-        return "\(m)分钟"
     }
 }
