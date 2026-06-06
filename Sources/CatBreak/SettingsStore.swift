@@ -2,6 +2,15 @@ import Foundation
 import Combine
 
 class SettingsStore: ObservableObject {
+    // MARK: - 常量
+    static let minUsageLimitSeconds = 60      // 最小 1 分钟
+    static let maxUsageLimitSeconds = 7200    // 最大 120 分钟
+    static let defaultUsageLimitSeconds = 3600  // 默认 60 分钟
+
+    static let minBreakDurationSeconds = 10
+    static let maxBreakDurationSeconds = 1200
+    static let defaultBreakDurationSeconds = 300  // 默认 5 分钟
+
     private let defaults = UserDefaults.standard
 
     private enum Keys {
@@ -22,6 +31,7 @@ class SettingsStore: ObservableObject {
     // 使用时长限额（秒）
     @Published var usageLimitSeconds: Int {
         didSet {
+            usageLimitSeconds = max(Self.minUsageLimitSeconds, min(Self.maxUsageLimitSeconds, usageLimitSeconds))
             defaults.set(usageLimitSeconds, forKey: Keys.usageLimitSeconds)
         }
     }
@@ -29,6 +39,7 @@ class SettingsStore: ObservableObject {
     // 休息时长（秒）
     @Published var breakDurationSeconds: Int {
         didSet {
+            breakDurationSeconds = max(Self.minBreakDurationSeconds, min(Self.maxBreakDurationSeconds, breakDurationSeconds))
             defaults.set(breakDurationSeconds, forKey: Keys.breakDurationSeconds)
         }
     }
@@ -53,11 +64,11 @@ class SettingsStore: ObservableObject {
     init() {
         // 使用时长限额：1分钟 ~ 120分钟 (7200秒)
         let savedUsage = defaults.integer(forKey: Keys.usageLimitSeconds)
-        self.usageLimitSeconds = savedUsage > 0 ? savedUsage : 3600  // 默认60分钟
+        self.usageLimitSeconds = savedUsage > 0 ? savedUsage : Self.defaultUsageLimitSeconds
 
         // 休息时长：10秒 ~ 20分钟 (1200秒)
         let savedBreak = defaults.integer(forKey: Keys.breakDurationSeconds)
-        self.breakDurationSeconds = savedBreak > 0 ? savedBreak : 300  // 默认5分钟
+        self.breakDurationSeconds = savedBreak > 0 ? savedBreak : Self.defaultBreakDurationSeconds
 
         self.launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
         self.muteOnBreak = defaults.bool(forKey: Keys.muteOnBreak)

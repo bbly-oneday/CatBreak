@@ -92,7 +92,7 @@ struct ContentView: View {
             VStack(spacing: 6) {
                 Text("本次使用时长")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(isDarkMode ? .white.opacity(0.6) : .secondary)
+                    .foregroundColor(isDarkMode ? .white.opacity(0.7) : .primary)
 
                 // 大时钟显示
                 let minutes = timerManager.elapsedSeconds / 60

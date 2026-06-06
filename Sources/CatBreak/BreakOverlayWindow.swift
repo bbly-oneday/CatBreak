@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 
+@MainActor
 class BreakOverlayWindow {
     private var windows: [NSWindow] = []
     private weak var timerManager: TimerManager?
@@ -18,6 +19,7 @@ class BreakOverlayWindow {
         self.timerManager = timerManager
     }
 
+    @MainActor
     func show() {
         breakCount += 1
         let currentBreakCount = breakCount
@@ -45,7 +47,9 @@ class BreakOverlayWindow {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.handleScreenChange()
+            Task { @MainActor in
+                self?.handleScreenChange()
+            }
         }
 
         startCountdown()
@@ -120,20 +124,32 @@ class BreakOverlayWindow {
     /// SwiftUI 自动根据 @Published 属性变化刷新所有屏幕上的视图
     private func startCountdown() {
         countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
-            guard let self = self, let tm = self.timerManager else {
-                timer.invalidate()
-                return
-            }
+            Task { @MainActor in
+                guard let self = self, let tm = self.timerManager else {
+                    timer.invalidate()
+                    return
+                }
 
-            let remaining = tm.currentBreakRemaining
+                let remaining = tm.currentBreakRemaining
 
-            if remaining <= 0 {
-                timer.invalidate()
-                self.hide()
-            } else {
-                // 只更新共享状态，SwiftUI 自动刷新
-                self.overlayState.remainingSeconds = remaining
+                if remaining <= 0 {
+                    timer.invalidate()
+                    self.hide()
+                } else {
+                    // 只更新共享状态，SwiftUI 自动刷新
+                    self.overlayState.remainingSeconds = remaining
+                }
             }
+        }
+    }
+
+    deinit {
+        countdownTimer?.invalidate()
+        countdownTimer = nil
+
+        if let observer = screenChangeObserver {
+            NotificationCenter.default.removeObserver(observer)
+            screenChangeObserver = nil
         }
     }
 }

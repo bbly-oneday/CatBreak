@@ -11,7 +11,12 @@ enum TimerState {
     case breaking
 }
 
+@MainActor
 class TimerManager: ObservableObject {
+    // MARK: - 常量
+    private let microphoneCheckInterval: Int = 10  // 麦克风检测间隔（秒）
+    private let breakCheckInterval: Int = 5        // 休息期间麦克风检测间隔（秒）
+
     @Published var state: TimerState = .idle
     @Published var elapsedSeconds: Int = 0
     @Published var isUserAway: Bool = false
@@ -100,8 +105,8 @@ class TimerManager: ObservableObject {
         if state == .monitoring || state == .warning {
             elapsedSeconds += 1
 
-            // 持续检测麦克风状态（每10秒检测一次）
-            if elapsedSeconds % 10 == 0 {
+            // 持续检测麦克风状态（每 microphoneCheckInterval 秒检测一次）
+            if elapsedSeconds % microphoneCheckInterval == 0 {
                 isInSensitiveApp = checkMicrophone()
                 if isInSensitiveApp {
                     Logger.timer.debug("tick: Sensitive app detected - \(self.sensitiveAppReason ?? "unknown")")
@@ -111,7 +116,8 @@ class TimerManager: ObservableObject {
             let remainingToLimit = settingsStore.usageLimitSeconds - elapsedSeconds
 
             // 预警：距限额还剩 warningAdvanceSeconds 秒时触发
-            if remainingToLimit == warningAdvanceSeconds && !isInSensitiveApp {
+            // 使用不等式检查防止 tick 被跳过时预警无法触发
+            if remainingToLimit <= warningAdvanceSeconds && remainingToLimit > 0 && !isWarning && !isInSensitiveApp {
                 Logger.timer.info("tick: Warning triggered, \(self.warningAdvanceSeconds) seconds to limit")
                 isWarning = true
                 state = .warning
@@ -151,11 +157,14 @@ class TimerManager: ObservableObject {
         onBreakStarted?()
 
         breakTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.breakCountdownTick()
+            DispatchQueue.main.async {
+                self?.breakCountdownTick()
+            }
         }
     }
 
     private func breakCountdownTick() {
+        guard state == .breaking else { return }
         breakRemainingSeconds -= 1
         breakTickCounter += 1
         if breakRemainingSeconds <= 0 {
@@ -163,8 +172,8 @@ class TimerManager: ObservableObject {
             return
         }
 
-        // 休息期间每5秒检测一次麦克风
-        if breakTickCounter % 5 == 0 {
+        // 休息期间每 breakCheckInterval 秒检测一次麦克风
+        if breakTickCounter % breakCheckInterval == 0 {
             let result = SensitiveAppDetector.checkActive()
             if result.isActive {
                 sensitiveAppReason = result.reason
@@ -179,6 +188,8 @@ class TimerManager: ObservableObject {
     }
 
     private func endBreak() {
+        guard state == .breaking else { return }  // 防止重复调用
+
         Logger.timer.info("endBreak: Break ended, returning to monitoring")
         breakTimer?.invalidate()
         breakTimer = nil
@@ -194,8 +205,12 @@ class TimerManager: ObservableObject {
     }
 
     func reset() {
-        breakTimer?.invalidate()
-        breakTimer = nil
+        // 如果正在休息中，先结束休息
+        if state == .breaking {
+            breakTimer?.invalidate()
+            breakTimer = nil
+            onBreakEnded?()
+        }
 
         state = .idle
         elapsedSeconds = 0
@@ -203,11 +218,17 @@ class TimerManager: ObservableObject {
         isInSensitiveApp = false
         isWarning = false
         lastInputTime = Date()
+        wentAwayTime = nil  // 确保清理
     }
 
     deinit {
         breakTimer?.invalidate()
         breakTimer = nil
+
+        // 清理回调闭包
+        onBreakStarted = nil
+        onBreakEnded = nil
+        onWarning = nil
     }
 
     // MARK: - 距限额剩余秒数（用于预警显示）

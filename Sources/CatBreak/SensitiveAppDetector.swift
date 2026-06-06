@@ -24,17 +24,8 @@ struct SensitiveAppDetector {
     /// 原理：遍历所有输入设备（内置麦克风、耳机麦克风等），只要有一个正在录制就返回 true
     /// 修复：仅检查默认输入设备时，外接耳机/蓝牙设备的 DeviceIsRunningSomewhere 可能不准确
     private static func isMicrophoneInUse() -> Bool {
-        // 方案1：遍历所有音频设备，检查是否有输入设备正在运行
-        if checkAllInputDevicesRunning() {
-            return true
-        }
-
-        // 方案2：检查进程是否有音频输入权限被激活（补充检测）
-        if checkAudioInputProcessActive() {
-            return true
-        }
-
-        return false
+        // 遍历所有音频设备，检查是否有输入设备正在运行
+        return checkAllInputDevicesRunning()
     }
 
     /// 遍历所有音频设备，检查是否有输入设备正在被某个应用使用
@@ -155,79 +146,4 @@ struct SensitiveAppDetector {
         return altStatus == noErr && isRunningAlt != 0
     }
 
-    /// 通过 TCC 权限数据库检测是否有进程正在使用音频输入
-    /// 这是一个补充检测手段，用于应对某些音频设备不正确报告运行状态的情况
-    private static func checkAudioInputProcessActive() -> Bool {
-        // 通过检查系统音频 IO 状态来判断
-        // 使用 kAudioHardwarePropertyProcessIsMain 作为补充
-        var address = AudioObjectPropertyAddress(
-            mSelector: kAudioHardwarePropertyProcessIsMain,
-            mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMain
-        )
-
-        var isMaster = UInt32(0)
-        var dataSize = UInt32(MemoryLayout<UInt32>.size)
-
-        let status = AudioObjectGetPropertyData(
-            AudioObjectID(kAudioObjectSystemObject),
-            &address,
-            0,
-            nil,
-            &dataSize,
-            &isMaster
-        )
-
-        // 如果获取失败，不作为判断依据
-        if status != noErr {
-            Logger.audio.debug("Failed to check if process is main: \(status)")
-            return false
-        }
-
-        // 检查默认输入设备的 IO 是否开启
-        var defaultInputDevice = AudioObjectID(0)
-        var defaultAddress = AudioObjectPropertyAddress(
-            mSelector: kAudioHardwarePropertyDefaultInputDevice,
-            mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMain
-        )
-        var defaultSize = UInt32(MemoryLayout<AudioObjectID>.size)
-
-        let defaultStatus = AudioObjectGetPropertyData(
-            AudioObjectID(kAudioObjectSystemObject),
-            &defaultAddress,
-            0,
-            nil,
-            &defaultSize,
-            &defaultInputDevice
-        )
-
-        guard defaultStatus == noErr, defaultInputDevice != 0 else {
-            Logger.audio.debug("Failed to get default input device: \(defaultStatus)")
-            return false
-        }
-
-        // 检查默认输入设备的输入 IO 是否启用
-        var ioEnabled = UInt32(0)
-        var ioAddress = AudioObjectPropertyAddress(
-            mSelector: kAudioDevicePropertyDeviceIsAlive,
-            mScope: kAudioObjectPropertyScopeGlobal,
-            mElement: kAudioObjectPropertyElementMain
-        )
-        var ioSize = UInt32(MemoryLayout<UInt32>.size)
-
-        let ioStatus = AudioObjectGetPropertyData(
-            defaultInputDevice,
-            &ioAddress,
-            0,
-            nil,
-            &ioSize,
-            &ioEnabled
-        )
-
-        // DeviceIsAlive + DeviceIsRunningSomewhere/IsRunning 都为 0 才认为没在用
-        // 这里作为辅助，不会单独返回 true，避免误判
-        _ = (ioStatus == noErr && ioEnabled != 0)
-        return false
-    }
 }

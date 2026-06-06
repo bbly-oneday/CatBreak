@@ -3,8 +3,17 @@ import SwiftUI
 import ServiceManagement
 import UserNotifications
 import CoreAudio
+import os.log
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    // MARK: - 常量
+    private enum Constants {
+        static let settingsWindowWidth: CGFloat = 320
+        static let settingsWindowHeight: CGFloat = 680
+        static let windowEdgePadding: CGFloat = 10
+        static let windowCornerRadius: CGFloat = 12
+    }
+
     private var statusItem: NSStatusItem!
     private var settingsWindow: NSWindow?
     private var timerManager: TimerManager!
@@ -19,7 +28,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // 请求通知权限
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
+            if let error = error {
+                Logger.app.error("Notification authorization failed: \(error)")
+            } else if granted {
+                Logger.app.debug("Notification authorization granted")
+            }
+        }
 
         // Initialize settings store (single instance)
         settingsStore = SettingsStore()
@@ -137,7 +152,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let contentView = ContentView(timerManager: timerManager, settingsStore: settingsStore)
         let hostingView = NSHostingView(rootView: contentView)
 
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 320, height: 680),
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: Constants.settingsWindowWidth, height: Constants.settingsWindowHeight),
                               styleMask: [.borderless],
                               backing: .buffered,
                               defer: false)
@@ -149,14 +164,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // 设置窗口圆角
         window.contentView?.wantsLayer = true
-        window.contentView?.layer?.cornerRadius = 12
+        window.contentView?.layer?.cornerRadius = Constants.windowCornerRadius
         window.contentView?.layer?.masksToBounds = true
         window.contentView?.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
 
         // 计算窗口位置：紧贴菜单栏底部，对齐图标
         let screenFrame = screen.frame
-        let windowWidth: CGFloat = 320
-        let windowHeight: CGFloat = 680
+        let windowWidth: CGFloat = Constants.settingsWindowWidth
+        let windowHeight: CGFloat = Constants.settingsWindowHeight
 
         // 菜单栏高度
         let menuBarHeight = screenFrame.height - screen.visibleFrame.height - screen.visibleFrame.origin.y
@@ -169,12 +184,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let rightEdge = x + windowWidth
         let screenRightEdge = screenFrame.origin.x + screenFrame.width
         if rightEdge > screenRightEdge {
-            x = screenRightEdge - windowWidth - 10
+            x = screenRightEdge - windowWidth - Constants.windowEdgePadding
         }
 
         // 如果左侧空间不足，则从屏幕左侧开始
         if x < screenFrame.origin.x {
-            x = screenFrame.origin.x + 10
+            x = screenFrame.origin.x + Constants.windowEdgePadding
         }
         let y = screenFrame.height - menuBarHeight - windowHeight
 
@@ -208,7 +223,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("Warning notification error: \(error)")
+                Logger.app.error("Warning notification error: \(error)")
             }
         }
 

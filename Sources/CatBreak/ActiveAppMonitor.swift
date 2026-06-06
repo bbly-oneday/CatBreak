@@ -18,16 +18,22 @@ class ActiveAppMonitor {
         // Subscribe to system-wide events for activity detection
         eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: activityEventTypes) { [weak self] _ in
             Logger.app.debug("User activity detected")
-            self?.timerManager.recordUserActivity()
+            DispatchQueue.main.async {
+                self?.timerManager.recordUserActivity()
+            }
         }
     }
 
     func start() {
         Logger.app.info("ActiveAppMonitor started")
         pollTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.timerManager.tick()
+            DispatchQueue.main.async {
+                self?.timerManager.tick()
+            }
         }
-        timerManager.startMonitoring()
+        Task { @MainActor in
+            timerManager.startMonitoring()
+        }
     }
 
     func stop() {
