@@ -1,0 +1,286 @@
+import Foundation
+import Combine
+import AppKit
+
+enum TimerState {
+    case idle
+    case monitoring
+    case paused   // 用户离开，暂停计时
+    case warning  // 预警：即将休息
+    case breaking
+}
+
+class TimerManager: ObservableObject {
+    @Published var state: TimerState = .idle
+    @Published var elapsedSeconds: Int = 0
+    @Published var isUserAway: Bool = false
+    @Published var isInSensitiveApp: Bool = false
+    @Published var sensitiveAppReason: String?
+    @Published var isWarning: Bool = false  // 预警状态
+
+    let settingsStore: SettingsStore
+
+    var onBreakStarted: (() -> Void)?
+    var onBreakEnded: (() -> Void)?
+    var onWarning: (() -> Void)?  // 预警回调
+
+    private var breakTimer: Timer?
+    private var breakRemainingSeconds: Int = 0
+    private var breakTickCounter: Int = 0  // 休息期间检测节流计数
+
+    // 离开阈值：超过 3 分钟无操作视为离开
+    private let idleThresholdSeconds: TimeInterval = 180
+    // 离开清零阈值：超过 10 分钟无操作，使用时长清零
+    private let resetAwayThresholdSeconds: TimeInterval = 600
+
+    // 预警提前秒数
+    let warningAdvanceSeconds: Int = 60
+
+    private var lastInputTime: Date = Date()
+    private var wentAwayTime: Date?
+
+    // MARK: - 每日统计
+    @Published var todayStats: DailyStats = DailyStats()
+
+    init(settingsStore: SettingsStore) {
+        self.settingsStore = settingsStore
+        self.todayStats = DailyStats.loadToday()
+    }
+
+    /// 检测麦克风是否正在使用
+    private func checkMicrophone() -> Bool {
+        let result = SensitiveAppDetector.checkActive()
+        if result.isActive {
+            sensitiveAppReason = result.reason
+        } else {
+            sensitiveAppReason = nil
+        }
+        return result.isActive
+    }
+
+    func recordUserActivity() {
+        lastInputTime = Date()
+        // 离开超过10分钟后状态变为 idle，用户回来时自动重新开始监控
+        if state == .idle {
+            startMonitoring()
+        }
+    }
+
+    func tick() {
+        guard state == .monitoring || state == .paused || state == .warning else { return }
+
+        let idleSeconds = Date().timeIntervalSince(lastInputTime)
+        let wasAway = isUserAway
+        isUserAway = idleSeconds > idleThresholdSeconds
+
+        if !wasAway && isUserAway {
+            wentAwayTime = Date()
+            state = .paused
+            isWarning = false
+        } else if wasAway && !isUserAway {
+            if let awayTime = wentAwayTime, Date().timeIntervalSince(awayTime) > resetAwayThresholdSeconds {
+                elapsedSeconds = 0
+            }
+            wentAwayTime = nil
+            state = .monitoring
+        }
+
+        // 离开超过10分钟：提前清零并回到待机
+        if isUserAway, let awayTime = wentAwayTime, Date().timeIntervalSince(awayTime) > resetAwayThresholdSeconds {
+            elapsedSeconds = 0
+            isUserAway = false
+            wentAwayTime = nil
+            isWarning = false
+            state = .idle
+            return
+        }
+
+        if state == .monitoring || state == .warning {
+            elapsedSeconds += 1
+            // 累计使用时长
+            todayStats.totalUsageSeconds += 1
+
+            // 持续检测麦克风状态（每10秒检测一次）
+            if elapsedSeconds % 10 == 0 {
+                isInSensitiveApp = checkMicrophone()
+            }
+
+            let remainingToLimit = settingsStore.usageLimitSeconds - elapsedSeconds
+
+            // 预警：距限额还剩 warningAdvanceSeconds 秒时触发
+            if remainingToLimit == warningAdvanceSeconds && !isInSensitiveApp {
+                isWarning = true
+                state = .warning
+                onWarning?()
+            }
+
+            // 到达限额
+            if elapsedSeconds >= settingsStore.usageLimitSeconds {
+                if !isInSensitiveApp {
+                    startBreak()
+                }
+                // 麦克风使用中则一直等待，直到空闲再休息
+            }
+        }
+    }
+
+    func startMonitoring() {
+        guard state == .idle else { return }
+        state = .monitoring
+        elapsedSeconds = 0
+        isUserAway = false
+        isInSensitiveApp = false
+        isWarning = false
+        lastInputTime = Date()
+        todayStats.longestContinuousSeconds = max(todayStats.longestContinuousSeconds, 0)
+    }
+
+    private func startBreak() {
+        // 记录本次连续使用时长
+        todayStats.longestContinuousSeconds = max(todayStats.longestContinuousSeconds, elapsedSeconds)
+        todayStats.breakCount += 1
+
+        state = .breaking
+        isWarning = false
+        breakRemainingSeconds = settingsStore.breakDurationSeconds
+
+        onBreakStarted?()
+
+        breakTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.breakCountdownTick()
+        }
+    }
+
+    private func breakCountdownTick() {
+        breakRemainingSeconds -= 1
+        breakTickCounter += 1
+        if breakRemainingSeconds <= 0 {
+            endBreak()
+            return
+        }
+
+        // 休息期间每5秒检测一次麦克风
+        if breakTickCounter % 5 == 0 {
+            let result = SensitiveAppDetector.checkActive()
+            if result.isActive {
+                sensitiveAppReason = result.reason
+                todayStats.skippedCount += 1
+                endBreak()
+            }
+        }
+    }
+
+    /// 供 BreakOverlayWindow 查询当前剩余秒数（单一数据源）
+    var currentBreakRemaining: Int {
+        return breakRemainingSeconds
+    }
+
+    private func endBreak() {
+        breakTimer?.invalidate()
+        breakTimer = nil
+
+        state = .monitoring
+        elapsedSeconds = 0
+        isUserAway = false
+        isInSensitiveApp = false
+        isWarning = false
+        lastInputTime = Date()
+
+        // 持久化统计
+        todayStats.save()
+
+        onBreakEnded?()
+    }
+
+    func reset() {
+        breakTimer?.invalidate()
+        breakTimer = nil
+
+        state = .idle
+        elapsedSeconds = 0
+        isUserAway = false
+        isInSensitiveApp = false
+        isWarning = false
+        lastInputTime = Date()
+    }
+
+    // MARK: - 距限额剩余秒数（用于预警显示）
+    var secondsToLimit: Int {
+        return max(0, settingsStore.usageLimitSeconds - elapsedSeconds)
+    }
+}
+
+// MARK: - 每日统计模型
+
+struct DailyStats: Codable {
+    var date: String = ""               // yyyy-MM-dd
+    var totalUsageSeconds: Int = 0      // 今日使用总时长
+    var breakCount: Int = 0             // 休息次数
+    var skippedCount: Int = 0           // 跳过/推迟次数
+    var longestContinuousSeconds: Int = 0  // 最长连续使用时长
+
+    private static let statsKey = "CatBreak.DailyStats"
+    private static let statsDateKey = "CatBreak.DailyStatsDate"
+
+    static func loadToday() -> DailyStats {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let today = formatter.string(from: Date())
+
+        let defaults = UserDefaults.standard
+        let savedDate = defaults.string(forKey: statsDateKey)
+
+        // 如果是今天的数据，加载；否则新建
+        if savedDate == today,
+           let data = defaults.data(forKey: statsKey),
+           let stats = try? JSONDecoder().decode(DailyStats.self, from: data) {
+            return stats
+        }
+
+        return DailyStats(date: today)
+    }
+
+    func save() {
+        let defaults = UserDefaults.standard
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let today = formatter.string(from: Date())
+
+        // 如果日期变了，重置统计
+        var toSave = self
+        if toSave.date != today {
+            toSave = DailyStats(date: today)
+        }
+
+        if let data = try? JSONEncoder().encode(toSave) {
+            defaults.set(data, forKey: Self.statsKey)
+            defaults.set(today, forKey: Self.statsDateKey)
+        }
+    }
+
+    var totalUsageMinutes: Int {
+        totalUsageSeconds / 60
+    }
+
+    var longestContinuousMinutes: Int {
+        longestContinuousSeconds / 60
+    }
+
+    var formattedTotalUsage: String {
+        let h = totalUsageSeconds / 3600
+        let m = (totalUsageSeconds % 3600) / 60
+        if h > 0 {
+            return "\(h)小时\(m)分钟"
+        }
+        return "\(m)分钟"
+    }
+
+    var formattedLongestContinuous: String {
+        let h = longestContinuousSeconds / 3600
+        let m = (longestContinuousSeconds % 3600) / 60
+        if h > 0 {
+            return "\(h)小时\(m)分钟"
+        }
+        return "\(m)分钟"
+    }
+}

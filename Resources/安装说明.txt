@@ -1,0 +1,13 @@
+CatBreak 安装说明
+==================
+
+1. 将 CatBreak.app 拖拽到 Applications 文件夹
+
+2. 如果打开时提示"已损坏，无法打开"，请打开终端（Terminal），执行以下命令：
+
+   xattr -cr /Applications/CatBreak.app
+
+   然后再次双击打开即可。
+
+   说明：这不是软件真的损坏，而是 macOS 对未签名应用的安全保护机制。
+   上述命令会清除系统的隔离标记，之后就能正常使用了。

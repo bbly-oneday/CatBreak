@@ -1,0 +1,329 @@
+import AppKit
+import SwiftUI
+import ServiceManagement
+import UserNotifications
+import CoreAudio
+
+class AppDelegate: NSObject, NSApplicationDelegate {
+    private var statusItem: NSStatusItem!
+    private var popover: NSPopover!
+    private var timerManager: TimerManager!
+    private var monitor: ActiveAppMonitor?
+    private var settingsStore: SettingsStore!
+
+    // 静音相关：保存静音前每个输出设备的静音状态
+    private var muteStatesBeforeBreak: [AudioObjectID: Bool] = [:]
+
+    // 区分左键（popover）和右键（菜单）
+    private var isPopoverVisible = false
+
+    // 预警通知是否已发送（避免重复）
+    private var warningDelivered: Bool = false
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // 请求通知权限
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+
+        // Initialize settings store (single instance)
+        settingsStore = SettingsStore()
+
+        // Wire up launch at login callback
+        settingsStore.onLaunchAtLoginChanged = { [weak self] enabled in
+            self?.setLaunchAtLogin(enabled)
+        }
+
+        // Initialize timer manager with settings store
+        timerManager = TimerManager(settingsStore: settingsStore)
+
+        // Setup status bar
+        setupStatusBar()
+
+        // Setup popover
+        setupPopover()
+
+        // Start monitoring
+        monitor = ActiveAppMonitor(timerManager: timerManager)
+        monitor?.start()
+
+        // Observe break state for overlay
+        timerManager.onBreakStarted = { [weak self] in
+            self?.showBreakOverlay()
+        }
+        timerManager.onBreakEnded = { [weak self] in
+            self?.hideBreakOverlay()
+        }
+
+        // Observe warning
+        timerManager.onWarning = { [weak self] in
+            self?.showWarningNotification()
+        }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        // 保存统计
+        timerManager.todayStats.save()
+        monitor?.stop()
+
+        // 如果正在休息中退出，恢复音量
+        if timerManager.state == .breaking && settingsStore.muteOnBreak {
+            restoreMuteStates()
+        }
+    }
+
+    // MARK: - Login Item
+
+    private func setLaunchAtLogin(_ enabled: Bool) {
+        if #available(macOS 13.0, *) {
+            do {
+                if enabled {
+                    try SMAppService.mainApp.register()
+                } else {
+                    try SMAppService.mainApp.unregister()
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.settingsStore.launchAtLogin = !enabled
+                    self.showAlert(message: "开机自启动设置失败: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    private func showAlert(message: String) {
+        let alert = NSAlert()
+        alert.messageText = "设置失败"
+        alert.informativeText = message
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "好的")
+        alert.runModal()
+    }
+
+    // MARK: - Status Bar
+
+    private func setupStatusBar() {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+
+        if let button = statusItem.button {
+            button.image = NSImage(systemSymbolName: "cat.fill", accessibilityDescription: "CatBreak")
+            button.image?.isTemplate = true
+            button.action = #selector(statusBarButtonClicked)
+            button.target = self
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        }
+    }
+
+    @objc private func statusBarButtonClicked() {
+        guard let event = NSApp.currentEvent else { return }
+
+        if event.type == .rightMouseUp {
+            let menu = NSMenu()
+            menu.addItem(NSMenuItem(title: "打开设置", action: #selector(togglePopover), keyEquivalent: ""))
+            menu.addItem(NSMenuItem.separator())
+            menu.addItem(NSMenuItem(title: "退出", action: #selector(quitApp), keyEquivalent: "q"))
+            statusItem.menu = menu
+            DispatchQueue.main.async {
+                self.statusItem.menu = nil
+            }
+        } else {
+            togglePopover()
+        }
+    }
+
+    private func setupPopover() {
+        popover = NSPopover()
+        popover.contentSize = NSSize(width: 320, height: 680)
+        popover.behavior = .transient
+        popover.animates = true
+
+        let contentView = ContentView(timerManager: timerManager, settingsStore: settingsStore)
+        popover.contentViewController = NSHostingController(rootView: contentView)
+    }
+
+    @objc private func togglePopover() {
+        if let button = statusItem.button {
+            if popover.isShown {
+                popover.performClose(nil)
+            } else {
+                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+                popover.contentViewController?.view.window?.makeKey()
+            }
+        }
+    }
+
+    @MainActor
+    @objc private func quitApp() {
+        NSApplication.shared.terminate(nil)
+    }
+
+    // MARK: - Warning Notification
+
+    private func showWarningNotification() {
+        guard !warningDelivered else { return }
+        warningDelivered = true
+
+        let content = UNMutableNotificationContent()
+        content.title = "CatBreak 预警"
+        content.body = "还有 \(timerManager.warningAdvanceSeconds / 60) 分钟即将开始休息，请保存工作！"
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: "CatBreak.warning",
+            content: content,
+            trigger: nil
+        )
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Warning notification error: \(error)")
+            }
+        }
+
+        // 休息开始后重置
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(timerManager.warningAdvanceSeconds + 10)) { [weak self] in
+            self?.warningDelivered = false
+        }
+    }
+
+    // MARK: - Break Overlay
+
+    private var breakWindow: BreakOverlayWindow?
+
+    private func showBreakOverlay() {
+        warningDelivered = false
+
+        // 休息时静音（CoreAudio 直接控制）
+        if settingsStore.muteOnBreak {
+            muteAllOutputDevices()
+        }
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.breakWindow = BreakOverlayWindow(timerManager: self.timerManager)
+            self.breakWindow?.show()
+        }
+    }
+
+    private func hideBreakOverlay() {
+        // 恢复音量
+        if settingsStore.muteOnBreak {
+            restoreMuteStates()
+        }
+
+        DispatchQueue.main.async { [weak self] in
+            self?.breakWindow?.hide()
+            self?.breakWindow = nil
+        }
+    }
+
+    // MARK: - Volume Control (CoreAudio)
+
+    /// 获取所有输出设备
+    private func getAllOutputDevices() -> [AudioObjectID] {
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDevices,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+
+        var dataSize: UInt32 = 0
+        var status = AudioObjectGetPropertyDataSize(
+            AudioObjectID(kAudioObjectSystemObject),
+            &address,
+            0, nil, &dataSize
+        )
+        guard status == noErr else { return [] }
+
+        let count = Int(dataSize) / MemoryLayout<AudioObjectID>.size
+        var deviceIDs = [AudioObjectID](repeating: 0, count: count)
+
+        status = AudioObjectGetPropertyData(
+            AudioObjectID(kAudioObjectSystemObject),
+            &address, 0, nil, &dataSize, &deviceIDs
+        )
+        guard status == noErr else { return [] }
+
+        // 过滤：只保留有输出流的设备
+        return deviceIDs.filter { deviceID in
+            var streamAddress = AudioObjectPropertyAddress(
+                mSelector: kAudioDevicePropertyStreams,
+                mScope: kAudioDevicePropertyScopeOutput,
+                mElement: kAudioObjectPropertyElementMain
+            )
+            var streamSize: UInt32 = 0
+            let s = AudioObjectGetPropertyDataSize(deviceID, &streamAddress, 0, nil, &streamSize)
+            return s == noErr && streamSize > 0
+        }
+    }
+
+    /// 获取设备的静音状态
+    private func getDeviceMuteState(_ deviceID: AudioObjectID) -> Bool {
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyMute,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+
+        var isMuted = UInt32(0)
+        var size = UInt32(MemoryLayout<UInt32>.size)
+        let status = AudioObjectGetPropertyData(deviceID, &address, 0, nil, &size, &isMuted)
+        return status == noErr && isMuted != 0
+    }
+
+    /// 设置设备的静音状态
+    private func setDeviceMuteState(_ deviceID: AudioObjectID, muted: Bool) -> Bool {
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyMute,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+
+        // 检查该设备是否支持静音设置
+        var isSettable = DarwinBoolean(false)
+        let settableStatus = AudioObjectIsPropertySettable(deviceID, &address, &isSettable)
+        if settableStatus != noErr || !isSettable.boolValue {
+            return false
+        }
+
+        var muteValue: UInt32 = muted ? 1 : 0
+        let status = AudioObjectSetPropertyData(
+            deviceID,
+            &address,
+            0, nil,
+            UInt32(MemoryLayout<UInt32>.size),
+            &muteValue
+        )
+        return status == noErr
+    }
+
+    /// 静音所有输出设备，并保存原始静音状态
+    private func muteAllOutputDevices() {
+        muteStatesBeforeBreak.removeAll()
+        let devices = getAllOutputDevices()
+
+        for deviceID in devices {
+            // 记录原始静音状态
+            let wasMuted = getDeviceMuteState(deviceID)
+            muteStatesBeforeBreak[deviceID] = wasMuted
+
+            // 如果原本没静音，则静音
+            if !wasMuted {
+                let success = setDeviceMuteState(deviceID, muted: true)
+                if !success {
+                    // 某些设备不支持静音，尝试用音量方式
+                    // 但大部分设备都支持 kAudioDevicePropertyMute
+                }
+            }
+        }
+    }
+
+    /// 恢复所有输出设备的静音状态
+    private func restoreMuteStates() {
+        for (deviceID, wasMuted) in muteStatesBeforeBreak {
+            // 只恢复原本没静音的设备
+            if !wasMuted {
+                _ = setDeviceMuteState(deviceID, muted: false)
+            }
+        }
+        muteStatesBeforeBreak.removeAll()
+    }
+}
