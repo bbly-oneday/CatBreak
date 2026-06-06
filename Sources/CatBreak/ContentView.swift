@@ -4,9 +4,6 @@ struct ContentView: View {
     @ObservedObject var timerManager: TimerManager
     @ObservedObject var settingsStore: SettingsStore
 
-    @State private var elapsedMinutes: Int = 0
-    @State private var elapsedSeconds: Int = 0
-    @State private var timer: Timer?
     @State private var showStats: Bool = false
 
     /// 深色模式检测
@@ -60,7 +57,9 @@ struct ContentView: View {
                 Text("本次使用时长")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                Text(String(format: "%02d:%02d", elapsedMinutes, elapsedSeconds))
+                let minutes = timerManager.elapsedSeconds / 60
+                let seconds = timerManager.elapsedSeconds % 60
+                Text(String(format: "%02d:%02d", minutes, seconds))
                     .font(.system(size: 36, weight: .bold, design: .monospaced))
                     .foregroundColor(timerManager.state == .breaking ? .red : (timerManager.isWarning ? .yellow : .primary))
 
@@ -278,26 +277,6 @@ struct ContentView: View {
         .padding(.top, 18)     // 顶部加大内边距，避免图标被裁切
         .padding(.bottom, 14)
         .frame(width: 300, height: 520)
-        .onAppear {
-            startUIUpdateTimer()
-        }
-        .onDisappear {
-            timer?.invalidate()
-        }
-        .onChange(of: timerManager.elapsedSeconds) { newValue in
-            elapsedMinutes = newValue / 60
-            elapsedSeconds = newValue % 60
-        }
-    }
-
-    private func startUIUpdateTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            _ = timerManager.elapsedSeconds
-            // 定期持久化统计
-            if timerManager.elapsedSeconds % 30 == 0 {
-                timerManager.todayStats.save()
-            }
-        }
     }
 
     private func formatCountdown(_ seconds: Int) -> String {

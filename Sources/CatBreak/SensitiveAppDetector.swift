@@ -1,4 +1,5 @@
 import CoreAudio
+import os.log
 
 /// 麦克风监测器
 ///
@@ -55,7 +56,10 @@ struct SensitiveAppDetector {
             &dataSize
         )
 
-        guard status == noErr else { return false }
+        guard status == noErr else {
+            Logger.audio.error("Failed to get audio device property data size: \(status)")
+            return false
+        }
 
         let deviceCount = Int(dataSize) / MemoryLayout<AudioObjectID>.size
         var deviceIDs = [AudioObjectID](repeating: 0, count: deviceCount)
@@ -69,7 +73,10 @@ struct SensitiveAppDetector {
             &deviceIDs
         )
 
-        guard status == noErr else { return false }
+        guard status == noErr else {
+            Logger.audio.error("Failed to get audio device IDs: \(status)")
+            return false
+        }
 
         // 遍历每个设备，只检查输入设备
         for deviceID in deviceIDs {
@@ -173,6 +180,7 @@ struct SensitiveAppDetector {
 
         // 如果获取失败，不作为判断依据
         if status != noErr {
+            Logger.audio.debug("Failed to check if process is main: \(status)")
             return false
         }
 
@@ -194,7 +202,10 @@ struct SensitiveAppDetector {
             &defaultInputDevice
         )
 
-        guard defaultStatus == noErr, defaultInputDevice != 0 else { return false }
+        guard defaultStatus == noErr, defaultInputDevice != 0 else {
+            Logger.audio.debug("Failed to get default input device: \(defaultStatus)")
+            return false
+        }
 
         // 检查默认输入设备的输入 IO 是否启用
         var ioEnabled = UInt32(0)

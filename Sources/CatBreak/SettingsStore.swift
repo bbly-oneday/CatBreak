@@ -9,6 +9,7 @@ class SettingsStore: ObservableObject {
         static let breakDurationSeconds = "breakDurationSeconds"
         static let launchAtLogin = "launchAtLogin"
         static let muteOnBreak = "muteOnBreak"
+        static let sensitiveAppBundleIds = "sensitiveAppBundleIds"
     }
 
     // 休息时自动静音
@@ -39,6 +40,13 @@ class SettingsStore: ObservableObject {
         }
     }
 
+    // 敏感应用 Bundle ID 列表
+    @Published var sensitiveAppBundleIds: [String] {
+        didSet {
+            defaults.set(sensitiveAppBundleIds, forKey: Keys.sensitiveAppBundleIds)
+        }
+    }
+
     /// 外部设置的回调，用于响应开机自启动切换
     var onLaunchAtLoginChanged: ((Bool) -> Void)?
 
@@ -53,5 +61,6 @@ class SettingsStore: ObservableObject {
 
         self.launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
         self.muteOnBreak = defaults.bool(forKey: Keys.muteOnBreak)
+        self.sensitiveAppBundleIds = defaults.stringArray(forKey: Keys.sensitiveAppBundleIds) ?? []
     }
 }

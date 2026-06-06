@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import AppKit
+import os.log
 
 enum TimerState {
     case idle
@@ -74,12 +75,16 @@ class TimerManager: ObservableObject {
         isUserAway = idleSeconds > idleThresholdSeconds
 
         if !wasAway && isUserAway {
+            Logger.timer.info("tick: User went away, pausing monitoring")
             wentAwayTime = Date()
             state = .paused
             isWarning = false
         } else if wasAway && !isUserAway {
             if let awayTime = wentAwayTime, Date().timeIntervalSince(awayTime) > resetAwayThresholdSeconds {
+                Logger.timer.info("tick: User returned after extended absence, resetting elapsed time")
                 elapsedSeconds = 0
+            } else {
+                Logger.timer.info("tick: User returned, resuming monitoring")
             }
             wentAwayTime = nil
             state = .monitoring
@@ -87,6 +92,7 @@ class TimerManager: ObservableObject {
 
         // 离开超过10分钟：提前清零并回到待机
         if isUserAway, let awayTime = wentAwayTime, Date().timeIntervalSince(awayTime) > resetAwayThresholdSeconds {
+            Logger.timer.info("tick: User away for extended period, returning to idle")
             elapsedSeconds = 0
             isUserAway = false
             wentAwayTime = nil
@@ -103,12 +109,16 @@ class TimerManager: ObservableObject {
             // 持续检测麦克风状态（每10秒检测一次）
             if elapsedSeconds % 10 == 0 {
                 isInSensitiveApp = checkMicrophone()
+                if isInSensitiveApp {
+                    Logger.timer.debug("tick: Sensitive app detected - \(self.sensitiveAppReason ?? "unknown")")
+                }
             }
 
             let remainingToLimit = settingsStore.usageLimitSeconds - elapsedSeconds
 
             // 预警：距限额还剩 warningAdvanceSeconds 秒时触发
             if remainingToLimit == warningAdvanceSeconds && !isInSensitiveApp {
+                Logger.timer.info("tick: Warning triggered, \(self.warningAdvanceSeconds) seconds to limit")
                 isWarning = true
                 state = .warning
                 onWarning?()
@@ -118,6 +128,8 @@ class TimerManager: ObservableObject {
             if elapsedSeconds >= settingsStore.usageLimitSeconds {
                 if !isInSensitiveApp {
                     startBreak()
+                } else {
+                    Logger.timer.debug("tick: Limit reached but sensitive app active, deferring break")
                 }
                 // 麦克风使用中则一直等待，直到空闲再休息
             }
@@ -126,6 +138,7 @@ class TimerManager: ObservableObject {
 
     func startMonitoring() {
         guard state == .idle else { return }
+        Logger.timer.info("startMonitoring: Starting monitoring from idle state")
         state = .monitoring
         elapsedSeconds = 0
         isUserAway = false
@@ -136,6 +149,7 @@ class TimerManager: ObservableObject {
     }
 
     private func startBreak() {
+        Logger.timer.info("startBreak: Starting break, elapsedSeconds=\(self.elapsedSeconds)")
         // 记录本次连续使用时长
         todayStats.longestContinuousSeconds = max(todayStats.longestContinuousSeconds, elapsedSeconds)
         todayStats.breakCount += 1
@@ -176,6 +190,7 @@ class TimerManager: ObservableObject {
     }
 
     private func endBreak() {
+        Logger.timer.info("endBreak: Break ended, returning to monitoring")
         breakTimer?.invalidate()
         breakTimer = nil
 
@@ -202,6 +217,11 @@ class TimerManager: ObservableObject {
         isInSensitiveApp = false
         isWarning = false
         lastInputTime = Date()
+    }
+
+    deinit {
+        breakTimer?.invalidate()
+        breakTimer = nil
     }
 
     // MARK: - 距限额剩余秒数（用于预警显示）
