@@ -21,3 +21,11 @@ DerivedData/
 CLAUDE.md
 docs/
 .codegraph/
+
+# IDE/Editor config directories
+.claude/
+.cursor/
+.gemini/
+.kiro/
+.mcp.json
+opencode.jsonc

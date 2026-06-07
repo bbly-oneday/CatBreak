@@ -28,19 +28,31 @@ class SettingsStore: ObservableObject {
         }
     }
 
-    // 使用时长限额（秒）
-    @Published var usageLimitSeconds: Int {
-        didSet {
-            usageLimitSeconds = max(Self.minUsageLimitSeconds, min(Self.maxUsageLimitSeconds, usageLimitSeconds))
-            defaults.set(usageLimitSeconds, forKey: Keys.usageLimitSeconds)
+    // 使用时长限额（秒）- 使用普通属性 + willSet 发送更新
+    private var _usageLimitSeconds: Int = 0
+    var usageLimitSeconds: Int {
+        get { _usageLimitSeconds }
+        set {
+            let clampedValue = max(Self.minUsageLimitSeconds, min(Self.maxUsageLimitSeconds, newValue))
+            if _usageLimitSeconds != clampedValue {
+                _usageLimitSeconds = clampedValue
+                defaults.set(clampedValue, forKey: Keys.usageLimitSeconds)
+                objectWillChange.send()
+            }
         }
     }
 
     // 休息时长（秒）
-    @Published var breakDurationSeconds: Int {
-        didSet {
-            breakDurationSeconds = max(Self.minBreakDurationSeconds, min(Self.maxBreakDurationSeconds, breakDurationSeconds))
-            defaults.set(breakDurationSeconds, forKey: Keys.breakDurationSeconds)
+    private var _breakDurationSeconds: Int = 0
+    var breakDurationSeconds: Int {
+        get { _breakDurationSeconds }
+        set {
+            let clampedValue = max(Self.minBreakDurationSeconds, min(Self.maxBreakDurationSeconds, newValue))
+            if _breakDurationSeconds != clampedValue {
+                _breakDurationSeconds = clampedValue
+                defaults.set(clampedValue, forKey: Keys.breakDurationSeconds)
+                objectWillChange.send()
+            }
         }
     }
 
@@ -64,11 +76,11 @@ class SettingsStore: ObservableObject {
     init() {
         // 使用时长限额：1分钟 ~ 120分钟 (7200秒)
         let savedUsage = defaults.integer(forKey: Keys.usageLimitSeconds)
-        self.usageLimitSeconds = savedUsage > 0 ? savedUsage : Self.defaultUsageLimitSeconds
+        _usageLimitSeconds = savedUsage > 0 ? savedUsage : Self.defaultUsageLimitSeconds
 
         // 休息时长：10秒 ~ 20分钟 (1200秒)
         let savedBreak = defaults.integer(forKey: Keys.breakDurationSeconds)
-        self.breakDurationSeconds = savedBreak > 0 ? savedBreak : Self.defaultBreakDurationSeconds
+        _breakDurationSeconds = savedBreak > 0 ? savedBreak : Self.defaultBreakDurationSeconds
 
         self.launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
         self.muteOnBreak = defaults.bool(forKey: Keys.muteOnBreak)

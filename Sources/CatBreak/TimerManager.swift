@@ -39,8 +39,8 @@ class TimerManager: ObservableObject {
     // 离开清零阈值：超过 10 分钟无操作，使用时长清零
     private let resetAwayThresholdSeconds: TimeInterval = 600
 
-    // 预警提前秒数
-    let warningAdvanceSeconds: Int = 60
+    // 预警提前秒数（5分钟）
+    let warningAdvanceSeconds: Int = 300
 
     private var lastInputTime: Date = Date()
     private var wentAwayTime: Date?
@@ -115,13 +115,20 @@ class TimerManager: ObservableObject {
 
             let remainingToLimit = settingsStore.usageLimitSeconds - elapsedSeconds
 
-            // 预警：距限额还剩 warningAdvanceSeconds 秒时触发
-            // 使用不等式检查防止 tick 被跳过时预警无法触发
-            if remainingToLimit <= warningAdvanceSeconds && remainingToLimit > 0 && !isWarning && !isInSensitiveApp {
-                Logger.timer.info("tick: Warning triggered, \(self.warningAdvanceSeconds) seconds to limit")
-                isWarning = true
-                state = .warning
-                onWarning?()
+            // 预警状态更新：根据剩余时间动态调整
+            if remainingToLimit <= warningAdvanceSeconds && remainingToLimit > 0 && !isInSensitiveApp {
+                // 进入或保持预警状态
+                if !isWarning {
+                    Logger.timer.info("tick: Warning triggered, \(self.warningAdvanceSeconds) seconds to limit")
+                    isWarning = true
+                    state = .warning
+                    onWarning?()
+                }
+            } else if isWarning {
+                // 剩余时间超过阈值，退出预警状态
+                Logger.timer.info("tick: Warning cleared, returning to monitoring")
+                isWarning = false
+                state = .monitoring
             }
 
             // 到达限额

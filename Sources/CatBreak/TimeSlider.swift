@@ -92,6 +92,7 @@ struct TimeSlider: View {
                         .gesture(
                             DragGesture(minimumDistance: 0)
                                 .onChanged { gesture in
+                                    guard geometry.size.width > 0 else { return }
                                     let location = max(0, min(1, gesture.location.x / geometry.size.width))
                                     let newValue = range.lowerBound + Int(location * Double(range.upperBound - range.lowerBound))
                                     let stepped = round(Double(newValue) / Double(step)) * Double(step)
@@ -102,6 +103,7 @@ struct TimeSlider: View {
                 // 支持点击整个轨道区域
                 .contentShape(Rectangle())
                 .onTapGesture { location in
+                    guard geometry.size.width > 0 else { return }
                     let tapLocation = location.x / geometry.size.width
                     let clampedLocation = max(0, min(1, tapLocation))
                     let newValue = range.lowerBound + Int(clampedLocation * Double(range.upperBound - range.lowerBound))

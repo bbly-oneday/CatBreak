@@ -83,11 +83,6 @@ struct ContentView: View {
     // MARK: - 计时区域
     private var timerSection: some View {
         VStack(spacing: 6) {
-            // 预警横幅 - 优化视觉效果
-            if timerManager.isWarning {
-                warningBanner
-            }
-
             // 计时卡片 - 主要视觉焦点
             VStack(spacing: 6) {
                 Text("本次使用时长")
@@ -114,36 +109,6 @@ struct ContentView: View {
             .padding(.vertical, 6)
         }
         .padding(.bottom, 4)
-    }
-
-    // MARK: - 预警横幅
-    private var warningBanner: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.orange)
-
-            Text("即将休息")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.orange)
-
-            Spacer()
-
-            Text(formatCountdown(timerManager.secondsToLimit))
-                .font(.system(size: 13, weight: .bold, design: .rounded))
-                .monospacedDigit()
-                .foregroundColor(.orange)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.orange.opacity(isDarkMode ? 0.15 : 0.08))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.orange.opacity(0.3), lineWidth: 1)
-        )
     }
 
     // MARK: - 进度条
