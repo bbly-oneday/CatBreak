@@ -28,17 +28,22 @@
 ---
 
 ## 📸 界面预览
+### 主界面面板
+
+<p align="center">
+  <img src="image/ZH1.jpg" alt="主界面面板" width="400">
+</p>
 
 ### 设置面板
 
 <p align="center">
-  <img src="image/软件操控界面.jpg" alt="设置面板" width="400">
+  <img src="image/ZH2.jpg" alt="设置面板" width="400">
 </p>
 
 ### 休息覆盖界面
 
 <p align="center">
-  <img src="image/强制休息界面.jpg" alt="休息覆盖界面" width="600">
+  <img src="image/ZH3.jpg" alt="休息覆盖界面" width="600">
 </p>
 
 ---

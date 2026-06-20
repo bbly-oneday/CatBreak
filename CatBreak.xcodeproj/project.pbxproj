@@ -13,6 +13,7 @@
 		3604AD90990336567FA8F281 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93591F7A907F79C428A441F7 /* L10n.swift */; };
 		3605022D799FEA4FF56FEFB1 /* catbreak.txt in Resources */ = {isa = PBXBuildFile; fileRef = 356F0517838579473438938C /* catbreak.txt */; };
 		3808F31F8CCFBD8C7ED7B0A8 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3367BDDD75C151BE2C8A6CE9 /* Localizable.strings */; };
+		5A8D661D547AF915B60A7D16 /* catbreak-en.txt in Resources */ = {isa = PBXBuildFile; fileRef = DF761F5618C149647AE0DF18 /* catbreak-en.txt */; };
 		5C96CEEF39B0C1993CF62C0B /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = B642913F125678A18670439E /* Logger.swift */; };
 		6BAF9CFFC54F2BF49FFC0BA7 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 28988BE8DBB91C5EF3413CC5 /* InfoPlist.strings */; };
 		713D20040CB09EDE0DBAD2CF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = DA0576671F4CF53A0A4BD74C /* PrivacyInfo.xcprivacy */; };
@@ -63,6 +64,7 @@
 		CD05F1B8869C845AA648C740 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		D4E221A9717BA0283930E85E /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		DA0576671F4CF53A0A4BD74C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		DF761F5618C149647AE0DF18 /* catbreak-en.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "catbreak-en.txt"; sourceTree = "<group>"; };
 		E1118F1D012EF7D7BA28C562 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E8ADA7083CCE8B28DEE75D47 /* BreakOverlayState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreakOverlayState.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -91,6 +93,7 @@
 				055681DAC286773A2CB8EB54 /* 安装说明.txt */,
 				764B5D514987DEECF3C98F96 /* AppIcon.icns */,
 				47876915AD05FEB6B8821711 /* Assets.xcassets */,
+				DF761F5618C149647AE0DF18 /* catbreak-en.txt */,
 				60AA1CE128175232B9F85D72 /* CatBreak.entitlements */,
 				C0A4D9F7D48197507CB4E05A /* catbreak.jpg */,
 				356F0517838579473438938C /* catbreak.txt */,
@@ -192,6 +195,7 @@
 				6BAF9CFFC54F2BF49FFC0BA7 /* InfoPlist.strings in Resources */,
 				3808F31F8CCFBD8C7ED7B0A8 /* Localizable.strings in Resources */,
 				713D20040CB09EDE0DBAD2CF /* PrivacyInfo.xcprivacy in Resources */,
+				5A8D661D547AF915B60A7D16 /* catbreak-en.txt in Resources */,
 				AC72A7AF71DBC3B7AFFF86DA /* catbreak.jpg in Resources */,
 				3605022D799FEA4FF56FEFB1 /* catbreak.txt in Resources */,
 				EB20D2912127EE9C21899690 /* 安装说明.txt in Resources */,

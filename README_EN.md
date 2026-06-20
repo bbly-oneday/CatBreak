@@ -29,16 +29,22 @@
 
 ## 📸 Screenshots
 
+### Main Panel
+
+<p align="center">
+  <img src="image/EN1.jpg" alt="Main Panel" width="400">
+</p>
+
 ### Settings Panel
 
 <p align="center">
-  <img src="image/软件操控界面.jpg" alt="Settings Panel" width="400">
+  <img src="image/EN2.jpg" alt="Settings Panel" width="400">
 </p>
 
 ### Break Overlay
 
 <p align="center">
-  <img src="image/强制休息界面.jpg" alt="Break Overlay" width="600">
+  <img src="image/ZH3.jpg" alt="Break Overlay" width="600">
 </p>
 
 ---
