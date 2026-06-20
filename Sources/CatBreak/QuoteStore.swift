@@ -1,10 +1,25 @@
 import Foundation
 
-/// 从 catbreak.txt 加载名人语录，使用洗牌算法确保短期内不重复
+/// 从语录文件加载名人语录，使用洗牌算法确保短期内不重复
+///
+/// 根据当前语言设置自动选择：
+/// - 中文：catbreak.txt
+/// - 英文：catbreak-en.txt
+///
+/// `@MainActor` 约束：`shuffledQuotes` / `currentIndex` 为静态可变状态，
+/// 仅允许从主线程访问，避免并发竞争。当前调用点（BreakOverlayWindow.show）均在主线程。
+@MainActor
 struct QuoteStore {
-    /// 解析后的语录列表（纯文本，不含序号和空行）
-    static let quotes: [String] = {
-        guard let path = Bundle.main.path(forResource: "catbreak", ofType: "txt") else {
+    /// 当前语言的语录列表
+    static var quotes: [String] {
+        let lang = LanguageManager.shared.resolvedCode
+        let fileName = (lang == "en") ? "catbreak-en" : "catbreak"
+        return loadQuotes(from: fileName)
+    }
+
+    /// 从指定文件加载语录
+    private static func loadQuotes(from fileName: String) -> [String] {
+        guard let path = Bundle.main.path(forResource: fileName, ofType: "txt") else {
             return []
         }
         guard let content = try? String(contentsOfFile: path, encoding: .utf8) else {
@@ -21,8 +36,15 @@ struct QuoteStore {
             if trimmed.contains("名言名句警句摘抄大全") { continue }
             if trimmed.hasPrefix("http") { continue }
 
-            // 匹配格式："数字、 内容" 或 "数字、内容"
+            // 匹配格式："数字、 内容" 或 "数字、内容"（中文顿号）
             if let range = trimmed.range(of: #"^\d+、\s*"#, options: .regularExpression) {
+                let quoteText = String(trimmed[range.upperBound...]).trimmingCharacters(in: .whitespaces)
+                if !quoteText.isEmpty {
+                    result.append(quoteText)
+                }
+            }
+            // 匹配格式："数字. 内容" 或 "数字.内容"（英文句点）
+            else if let range = trimmed.range(of: #"^\d+\.\s*"#, options: .regularExpression) {
                 let quoteText = String(trimmed[range.upperBound...]).trimmingCharacters(in: .whitespaces)
                 if !quoteText.isEmpty {
                     result.append(quoteText)
@@ -31,7 +53,7 @@ struct QuoteStore {
         }
 
         return result
-    }()
+    }
 
     /// 洗牌后的语录列表
     static private var shuffledQuotes: [String] = []
@@ -41,7 +63,7 @@ struct QuoteStore {
     /// 使用洗牌算法获取一条语录，确保短期内不重复
     static func random() -> String {
         guard !quotes.isEmpty else {
-            return "放下键盘，起来活动一下吧！"
+            return L10n.tr("break.default_quote")
         }
 
         // 如果洗牌列表已空或已遍历完，重新洗牌

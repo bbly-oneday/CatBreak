@@ -1,0 +1,9 @@
+/*
+  InfoPlist.strings
+  CatBreak
+
+  Created for App Store compliance.
+  Localized privacy permission descriptions.
+*/
+
+"NSMicrophoneUsageDescription" = "CatBreak only detects if the microphone is in use during calls or meetings to automatically defer break reminders. No audio is recorded or stored.";

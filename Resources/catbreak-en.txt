@@ -1,0 +1,646 @@
+1. Time is life.
+2. Times change.
+3. Time is money.
+4. Life is sweet.
+5. Love is blind.
+6. Extremes meet.
+7. Like knows like.
+8. Let well alone.
+9. Marry thy like.
+10. One man, no man.
+11. History is bunk.
+12. Time marches on.
+13. Murder will out.
+14. Never say "die".
+15. Care is no cure.
+16. Beware beginning.
+17. Deeds, not words.
+18. No mill, no meal.
+19. Like begets like.
+20. Love begets love.
+21. In doing we learn.
+22. No cross, no crown.
+23. Care killed a cat.
+24. Boys will be boys.
+25. No song, no supper.
+26. The truth will out.
+27. Time works wonders.
+28. To think is to see.
+29. Truth will prevail.
+30. A lie begets a lie.
+31. Years bring wisdom.
+32. In love is no lack.
+33. Easy come, easy go.
+34. Every little helps.
+35. Forgive and forget.
+36. Manners maketh man.
+37. Laugh and grow fat.
+38. Knowledge is power.
+39. Let the world slide.
+40. Love me, love my dog.
+41. Life means struggle.
+42. Fair play's a jewel.
+43. Early sow, early mow.
+44. Grasp all, lose all.
+45. What's lost is lost.
+46. Waste not, want not.
+47. Tomorrow never comes.
+48. No man is infallible.
+49. Alms never make poor.
+50. Love will find a way.
+51. Manners make the man.
+52. Patience is a virtue.
+53. Pity is akin to love.
+54. Call a spade a spade.
+55. Delays are dangerous.
+56. Diamond cuts diamond.
+57. Counsel is no command.
+58. Poverty tries friends.
+59. Once bitten, twice shy.
+60. Pain past is pleasure.
+61. Leal heart lied never.
+62. Hot love is soon cold.
+63. As good lost as found.
+64. Every dog has his day.
+65. Wise fear begets care.
+66. "Never" is a long word.
+67. After wind comes rain.
+68. Nurture passes nature.
+69. Time tries all things.
+70. Time cures all things.
+71. Truth needs no colour.
+72. Silence gives consent.
+73. Still waters run deep.
+74. Study, study, and study.
+75. Virtue never grows old.
+76. No sweet without sweat.
+77. No herb will cure love.
+78. A true jest is no jest.
+79. A man can die but once.
+80. A bargain is a bargain.
+81. All men can't be first.
+82. All roads lead to Rome.
+83. Every flow has its ebb.
+84. History repeats itself.
+85. I think, therefore I am.
+86. Let bygones be bygones.
+87. Like author, like book.
+88. Pardon all but thyself.
+89. Pride goes before fall.
+90. Knowledge is no burden.
+91. Civility costs nothing.
+92. Charity begins at home.
+93. Better late than never.
+94. Better leave than lack.
+95. Cheapest is the dearest.
+96. Custom is second nature.
+97. In valour there is hope.
+98. Reason rules all things.
+99. Learn young, learn fair.
+100. Idleness rusts the mind.
+101. Health and money go far.
+102. Hope well and have well.
+103. Hope is a lover's staff.
+104. Every Jack has his Jill.
+105. If the cap fits, wear it.
+106. Failure teaches success.
+107. First think, then speak.
+108. Forewarned is forearmed.
+109. Barking dogs don't bite.
+110. Beauty is but skin-deep.
+111. Beauty will buy no beef.
+112. Good wine needs no bush.
+113. Great minds think alike.
+114. All his geese are swans.
+115. A poet is born, not made.
+116. A snow year, a rich year.
+117. No man is indispensable.
+118. Never hope for too much.
+119. Tomorrow is another day.
+120. Time is life for doctors.
+121. Time is the great healer.
+122. Time works great changes.
+123. Two can play at the game.
+124. Success has many friends.
+125. No pleasure without pain.
+126. Take things as they come.
+127. Talent is as talent does.
+128. All for one, one for all.
+129. A little pot is soon hot.
+130. A cat may look at a king.
+131. A good marksman may miss.
+132. Anger is a brief madness.
+133. Wonders will never cease.
+134. You never know your luck.
+135. Youth is half the battle.
+136. As the call, so the echo.
+137. As the tree, so the fruit.
+138. He who hesitates is lost.
+139. Fortune favours the bold.
+140. Forbidden fruit is sweet.
+141. From saving comes having.
+142. Fool's haste is no speed.
+143. Fair and softly goes far.
+144. Every man has his faults.
+145. Hunger is the best sauce.
+146. Learn even from an enemy.
+147. Little goods little care.
+148. Practise what you preach.
+149. Second thoughts are best.
+150. It is hard to please all.
+151. Business before pleasure.
+152. It is dogged that does it.
+153. It's a day after the fair.
+154. Reading enriches the mind.
+155. Opportunities do not wait.
+156. Other times, other manners.
+157. Love laughs at locksmiths.
+158. Let the sleeping dogs lie.
+159. Every medal has two sides.
+160. Every bean hath its black.
+161. Even Homer sometimes nods.
+162. Facts are stubborn things.
+163. Every why has a wherefore.
+164. Fortune favours the brave.
+165. Art is long, life is short.
+166. Bad times make a good man.
+167. Better be sure than sorry.
+168. Good counsel does no harm.
+169. Anything for a quiet life.
+170. Appearances are deceptive.
+171. Who knows most says least.
+172. A good deed is never lost.
+173. A lazy youth, a lousy age.
+174. A watched pot never boils.
+175. Take time by the forelock.
+176. Nothing seek, nothing find.
+177. Never do things by halves.
+178. The wages of sin is death.
+179. Sow nothing, reap nothing.
+180. True love never grows old.
+181. Sharp tools make good work.
+182. Sweep before your own door.
+183. Time is wealth for workers.
+184. Time is grain for peasants.
+185. Today is Yesterday's pupil.
+186. After a storm comes a calm.
+187. A man's home is his castle.
+188. A bully is always a coward.
+189. A creaking door hangs long.
+190. A bow long bent grows weak.
+191. An artist lives everywhere.
+192. Youth will have its course.
+193. There are spots in the sun.
+194. Beggars cannot be choosers.
+195. Be still, and have the will.
+196. Art lies in concealing art.
+197. Freedom lies in being bold.
+198. Give losers leave to speak.
+199. First thrive and then wive.
+200. East or West, home is best.
+201. Every oak must be an acorn.
+202. Every man is his own enemy.
+203. Labour created man himself.
+204. Leave off with an appetite.
+205. Love is the mother of love.
+206. Love is the reward of love.
+207. Man proposes, God disposes.
+208. Man is not made for defeat.
+209. Life is too short to waste.
+210. Honesty is the best policy.
+211. Honour lies in honest toil.
+212. Hitch your wagon to a star.
+213. Hold fast when you have it.
+214. Many hands make light work.
+215. Marriage is a covered dish.
+216. Brevity is the soul of wit.
+217. Bread is the staff of life.
+218. Blushing is virtue's color.
+219. Do as you would be done by.
+220. Drawn wells are seldom dry.
+221. Drift is as bad as unthrift.
+222. Don't meet trouble half-way.
+223. Diligence redeems stupidity.
+224. Blood is thicker than water.
+225. Counsel breaks not the head.
+226. Clothes do not make the man.
+227. Idleness makes the wit rust.
+228. Love is stronger than death.
+229. Love me little, love me long.
+230. One's sin will find one out.
+231. One love drives out another.
+232. Prettiness makes no pottage.
+233. Pen and ink is wit's plough.
+234. It's never too late to mend.
+235. Rome was not built in a day.
+236. In the end things will mend.
+237. Envy never enriched any man.
+238. Familiarity breeds contempt.
+239. Friends are thieves of time.
+240. Four eyes see more than two.
+241. Good clothes open all doors.
+242. Good advice is beyond price.
+243. Youth is the season of hope.
+244. All rivers run into the sea.
+245. "They say so" is half a lie.
+246. A curst cow has short horns.
+247. A miss is as good as a mile.
+248. All is fair in love and war.
+249. A stitch in time saves nine.
+250. Time is the father of truth.
+251. There is no end to learning.
+252. There is no satiety in study.
+253. Time is the greatest teacher.
+254. Time is speed for scientists.
+255. Variety is the spice of life.
+256. We are all slaves of opinion.
+257. More than enough is too much.
+258. The shortest answer is doing.
+259. Nothing venture, nothing have.
+260. No living man all things can.
+261. A wonder lasts but nine days.
+262. A word is enough to the wise.
+263. A little labour, much health.
+264. A lean dog shames his master.
+265. A hungry man is an angry man.
+266. A green wound is soon healed.
+267. What's done cannot be undone.
+268. What man has done, man can do.
+269. Wishes never can fill a sack.
+270. He goes far that never turns.
+271. He that talks much errs much.
+272. He that talks much lies much.
+273. Before friends all is common.
+274. Far fowls have fair feathers.
+275. Eyes are as eloquent as lips.
+276. Easy and success are fellows.
+277. Many a little makes a mickle.
+278. Love and cough cannot be hid.
+279. Life is compared to a voyage.
+280. Life is real, life is earnest.
+281. Marriage makes or mars a man.
+282. Money is round. It rolls away.
+283. Hope is life and life is hope.
+284. Comfort is better than pride.
+285. Custom makes all things easy.
+286. Diet cures more than doctors.
+287. Deliberating is not delaying.
+288. Dexterity comes by experience.
+289. Doubt is the key of knowledge.
+290. Dare and diligence bring luck.
+291. Blow first and sip afterwards.
+292. Human pride is human weakness.
+293. Lazy folk take the most pains.
+294. Light not a candle to the sun.
+295. Love is the lodestone of life.
+296. It is never too late to learn.
+297. Justifying a fault doubles it.
+298. Kill two birds with one stone.
+299. Truth is stranger than fiction.
+300. No man is born wise or learned.
+301. No man is content with his lot.
+302. The pot calls the kettle black.
+303. Adversity is a good discipline.
+304. A wilful man will have his way.
+305. A beggar can never be bankrupt.
+306. A close mouth catches no flies.
+307. A glass at supper is not amiss.
+308. A friend is known in necessity.
+309. A great city, a great solitude.
+310. A honey tongue, a heart of gall.
+311. A lion at home, a mouse abroad.
+312. Without learning, without eyes.
+313. Work won't kill but worry will.
+314. The world is his who enjoys it.
+315. He that is a master must serve.
+316. He laughs best who laughs last.
+317. Good watch prevents misfortune.
+318. Haste trips over its own heels.
+319. Happiness is a form of courage.
+320. Art is long, but life is short.
+321. Best to bend while it's a twig.
+322. Bear with evil, and expect good.
+323. He that travels far knows much.
+324. As a man sows so he shall reap.
+325. Extreme right is extreme wrong.
+326. Example is better than precept.
+327. Every shoe fits not every foot.
+328. One good turn deserves another.
+329. Once a beggar, always a beggar.
+330. Prevention is better than cure.
+331. Please all and you please none.
+332. Plough deeper and harvest more.
+333. Plain living and high thinking.
+334. Judge not a book by its covers.
+335. Keeping is harder than winning.
+336. Knowledge comes from diligence.
+337. It's no use pumping a dry well.
+338. It takes two to make a quarrel.
+339. Make the best of a bad bargain.
+340. Little chips light great fires.
+341. Honour and profit lie not in one sack.
+342. Blind men can judge no colours.
+343. Call no man happy till he dies.
+344. Children are poor men's riches.
+345. Don't carry coals to Newcastle.
+346. Desires are nourished by delays.
+347. Do what is right, come what may.
+348. Cross your t's and dot your i's.
+349. Hide nothing from thy physician.
+350. Health and wealth create beauty.
+351. Living well is the best revenge.
+352. Love is neither bought nor sold.
+353. Learning is the eye of the mind.
+354. Life is short and time is swift.
+355. It is good to be merry and wise.
+356. Saying and doing are two things.
+357. One cannot serve God and Mammon.
+358. One today is worth two tomorrow.
+359. One tree does not make a forest.
+360. Every cloud has a silver lining.
+361. Fair and softly to far in a day.
+362. Gather ye rosebuds while ye may.
+363. Gentility is but ancient riches.
+364. Give credit where credit is due.
+365. Be just before you are generous.
+366. Great men's sons seldom do well.
+367. Handsome is that handsome does.
+368. He gives twice who gives quickly.
+369. Good masters make good servants.
+370. Goods are theirs who enjoy them.
+371. He is wise that is ware in time.
+372. There are tricks in every trade.
+373. Any help is better than no help.
+374. What God will no frost can kill.
+375. A good neighbour, a good morrow.
+376. A cat in gloves catches no mice.
+377. A good tongue is a good weapon.
+378. Actions speak louder than words.
+379. A rolling stone gathers no moss.
+380. A penny saved is a penny gained.
+381. The early bird catches the worm.
+382. The beginning is not everything.
+383. No legacy is so rich as honesty.
+384. Observation is the best teacher.
+385. No way is impossible to courage.
+386. True love is giving, not taking.
+387. Wasting time is robbing oneself.
+388. Speech is silver, silence is gold.
+389. Stuff today and starve tomorrow.
+390. Strike the iron while it is hot.
+391. Sweet are the uses of adversity.
+392. To me, faith means not worrying.
+393. Time is victory for strategists.
+394. They brag most who can do least.
+395. They that live longest see most.
+396. Things are seldom what they seem.
+397. There is no rose without a thorn.
+398. Time is everything for all of us.
+399. Time dresses the greatest wounds.
+400. To no man will we refuse justice.
+401. To save time is to lengthen life.
+402. Sound love is not soon forgotten.
+403. United we stand, divided we fall.
+404. No road of flowers lead to glory.
+405. Needs must when the devil drives.
+406. Never make two bites of a cherry.
+407. The mother's breath is aye sweet.
+408. A man can do no more than he can.
+409. After dinner comes the reckoning.
+410. A still tongue makes a wise head.
+411. A bad padlock invites a picklock.
+412. A boaster and a liar are all one.
+413. A day is a miniature of eternity.
+414. A good thing is soon snatched up.
+415. Virtue is the only true nobility.
+416. An onion will not produce a rose.
+417. When at Rome, do as the Romans do.
+418. The wife is the key of the house.
+419. You may delay, but time will not.
+420. He is lifeless that is faultless.
+421. He that never climbed, never fell.
+422. Good take-heed doth surely speed.
+423. He gives twice who gives quickly.
+424. As is the workman so is the work.
+425. As a tree falls, so shall it lie.
+426. Gifts from enemies are dangerous.
+427. Give me liberty or give me death.
+428. Failure is the mother of success.
+429. Everything is good for something.
+430. Everything must have a beginning.
+431. Economy is itself a great income.
+432. Once virtue is lost, all is lost.
+433. One must draw the line somewhere.
+434. Self-praise is no recommendation.
+435. It's only the idle will be tired.
+436. Life is made up of little things.
+437. Language is the dress of thought.
+438. Love is the touchstone of virtue.
+439. Look on both sides of the shield.
+440. Live not to eat, but eat to live.
+441. Little and often fills the purse.
+442. Men may meet but mountains never.
+443. Many words hurt more than swords.
+444. Idle folk have the least leisure.
+445. Cornered beasts will still fight.
+446. Cleanliness is next to godliness.
+447. Call me cousin, but cozen me out.
+448. Better lose a jest than a friend.
+449. Dispatch is the soul of business.
+450. Birds in their little nests agree.
+451. Birds of a feather flock together.
+452. Better unlearned than ill-learned.
+453. Better wear out shoes than sheets.
+454. Idleness is the root of all evils.
+455. Many words will not fill a bushel.
+456. Men are known by their companions.
+457. Men only weep when deeply grieved.
+458. He works best who knows his trade.
+459. Look on the bright side of things.
+460. Little things please little minds.
+461. Life is not all beer and skittles.
+462. Let that which is lost be for God.
+463. It is not lost that a friend gets.
+464. Kitchen Physic is the best physic.
+465. Knowledge is the antidote to fear.
+466. It is better to give than to take.
+467. One flower does not make a spring.
+468. Only the selfless can be fearless.
+469. Overeating will cause indigestion.
+470. Empty vessels make the most sound.
+471. Even a black hen lays a white egg.
+472. Even reckoning makes long friends.
+473. Everything comes to him who waits.
+474. Gear is easier gained than guided.
+475. Good things are worth waiting for.
+476. Great trees keep down little ones.
+477. Zeal should not outrun discretion.
+478. The wish is father to the thought.
+479. While there is life there is hope.
+480. A good name is better than riches.
+481. A danger foreseen is half avoided.
+482. A light purse makes a heavy heart.
+483. Adversity is a great schoolmaster.
+484. The path to glory is always rugged.
+485. The best mirror is a friend's eye.
+486. The cow eats grass but gives milk.
+487. The good is the enemy of the best.
+488. Never offer to teach fish to swim.
+489. Old friends and old wine are best.
+490. No man can lose what he never had.
+491. Newspapers are the world's mirror.
+492. No man is happy but by comparison.
+493. True nobility is exempt from fear.
+494. Spare the rod and spoil the child.
+495. Speech is the picture of the mind.
+496. There is no time like the present.
+497. There's nothing new under the sun.
+498. Through obedience learn to command.
+499. There is no royal road to learning.
+500. There is no disputing about tastes.
+501. Speech is silver, silence is gold.
+502. Success belongs to the persevering.
+503. Strong in action, gentle in method.
+504. Sometimes the best gain is to lose.
+505. So many countries, so many customs.
+506. Vainglory blossoms but never bears.
+507. Truth's best ornament is nakedness.
+508. Never fry a fish till it is caught.
+509. The best fish swim near the bottom.
+510. The pen is mightier than the sword.
+511. The least said, the soonest mended.
+512. All bread is not baked in one oven.
+513. A work ill done must be twice done.
+514. A lawyer never goes to law himself.
+515. A great fortune is a great slavery.
+516. A friend is easier lost than found.
+517. A fool may give a wise man counsel.
+518. A foul morn may turn to a fair day.
+519. A cheerful wife is the joy of life.
+520. A city that parleys is half gotten.
+521. A book that is shut is but a block.
+522. A bride is diligent for three days.
+523. A brother is a friend given by God.
+524. A bad beginning makes a bad ending.
+525. Whatever you do, do with your might.
+526. An empty sack cannot stand upright.
+527. All true love is founded on esteem.
+528. The world belongs to the energetic.
+529. The wind cannot be caught in a net.
+530. You can't judge a tree by its bark.
+531. Wine and judgement mature with age.
+532. Wisdom first teaches what is right.
+533. He is happy that thinks himself so.
+534. He that cannot obey cannot command.
+535. He that runs fastest gets the ring.
+536. At need one sees who his friend is.
+537. Give a dog a bad name and hang him.
+538. Gluttony kills more than the sword.
+539. Experience is the teacher of fools.
+540. First impressions are most lasting.
+541. Eat at pleasure, drink with measure.
+542. Every man has a fool in his sleeve.
+543. Every man is best known to himself.
+544. Every man loves what he is good at.
+545. In a calm sea every man is a pilot.
+546. One swallow does not make a summer.
+547. Respect a man, he will do the same.
+548. Problems loom large when men don't.
+549. Quality matters more than quantity.
+550. It is ill jesting with edged tools.
+551. Kind hearts are more than coronets.
+552. Kindness cannot be bought for gear.
+553. It takes all sorts to make a world.
+554. Make yourself necessary to someone.
+555. Home is home, be it never so homely.
+556. Hide not your light under a bushel.
+557. Medicines are not meant to live on.
+558. Better to do well than to say well.
+559. By his claw, you may know the lion.
+560. Couch hard arguments in soft words.
+561. Custom reconciles us to everything.
+562. Diligence is the mother of success.
+563. Deliberate slowly, execute promptly.
+564. Don't put the cart before the horse.
+565. Command your man and do it yourself.
+566. Conceit is the quicksand of success.
+567. By doing nothing we learn to do ill.
+568. Can man be free if woman is a slave?
+569. Birth is much, but breeding is more.
+570. Beware of the fury of a patient man.
+571. Misfortunes tell us what fortune is.
+572. Humility is the beginning of wisdom.
+573. Love asks faith, and faith firmness.
+574. Labour is light where love doth pay.
+575. Knock, and the door shall be opened.
+576. It is no use crying over spilt milk.
+577. Our best thought comes from others.
+578. In every beginning think of the end.
+579. If you swear you will catch no fish.
+580. Ignorance of the law excuses no man.
+581. Every one is witty for his own goal.
+582. Envy may dissatisfy us with our lot.
+583. First catch your hare, then cook him.
+584. Faults are thick where love is thin.
+585. Glasses and lasses are brittle ware.
+586. From words to deeds is a good space.
+587. He that gains time gains all things.
+588. Gossiping and lying go hand in hand.
+589. Good is good, but better carries it.
+590. Haste and wisdom are things far odd.
+591. Wisdom is more precious than wealth.
+592. Without respect, love cannot go far.
+593. What is a workman without his tools?
+594. A bribe will enter without knocking.
+595. A bow long bent at last waxeth weak.
+596. A black plum is as sweet as a white.
+597. A cracked bell can never sound well.
+598. A friend in need is a friend indeed.
+599. A faint heart never won a fair lady.
+600. A friend to all is a friend to none.
+601. A good beginning is half the battle.
+602. A good name is sooner lost than won.
+603. A horse stumbles that has four legs.
+604. A thing of beauty is a joy for ever.
+605. A small leak will sink a great ship.
+606. Adversity makes a man wise, not rich.
+607. A penny soul never came to twopence.
+608. The noblest vengeance is to forgive.
+609. The bull must be taken by the horns.
+610. Never write what you dare not sign.
+611. The tongue is not steel, yet it cuts.
+612. True coral needs no painter's brush.
+613. Something attempted, something done.
+614. Speak the truth and shame the devil.
+615. Take little, but give much.
+616. Storms make trees take deeper roots.
+617. Standers-by see more than gamesters.
+618. Think more, and you'll become wiser.
+619. To find friendship offer friendship.
+620. Time is a bird for ever on the wing.
+621. Time is knowledge for educationists.
+622. To err is human. To forgive, divine.
+623. There is no garden without its weeds.
+624. We learn from the mistakes of others.
+625. None but the brave deserves the fair.
+626. None so deaf as those who won't hear.
+627. The fairest rose is at last withered.
+628. The path of duty is the way to glory.
+629. The last drop makes the cup run over.
+630. The more you have, the more you want.
+631. Absence makes the heart grow fonder.
+632. A good horse should be seldom spurred.
+633. All are not saints that go to church.
+634. A quiet conscience sleeps in thunder.
+635. A trouble shared is a trouble halved.
+636. A guilty conscience needs no accuser.
+637. A good beginning makes a good ending.
+638. A good friend is my nearest relation.
+639. A fool and his money are soon parted.
+640. A forced kindness deserves no thanks.
+641. A dear ship stands long in the haven.
+642. A drowning man will catch at a straw.
+643. A beard well lathered is half shaved.
+644. What is done by night appears by day.
+645. What greater crime than loss of time?
+646. An apple a day keeps the doctor away.

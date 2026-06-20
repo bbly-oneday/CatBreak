@@ -10,14 +10,17 @@ struct TimeSlider: View {
 
     // 根据值显示友好文字
     private var displayValue: String {
+        let lang = LanguageManager.shared.resolvedCode
+        let isEnglish = lang == "en"
+
         if value < 60 {
-            return "\(value)秒"
+            return isEnglish ? "\(value)s" : "\(value)秒"
         } else if value % 60 == 0 {
-            return "\(value / 60)分钟"
+            return isEnglish ? "\(value / 60) min" : "\(value / 60)分钟"
         } else {
             let min = value / 60
             let sec = value % 60
-            return "\(min)分\(sec)秒"
+            return isEnglish ? "\(min)m \(sec)s" : "\(min)分\(sec)秒"
         }
     }
 
@@ -96,7 +99,8 @@ struct TimeSlider: View {
                                     let location = max(0, min(1, gesture.location.x / geometry.size.width))
                                     let newValue = range.lowerBound + Int(location * Double(range.upperBound - range.lowerBound))
                                     let stepped = round(Double(newValue) / Double(step)) * Double(step)
-                                    value = Int(stepped)
+                                    // clamp 到 range，避免 round 后落在 lowerBound 之下或 upperBound 之上
+                                    value = min(range.upperBound, max(range.lowerBound, Int(stepped)))
                                 }
                         )
                 }
@@ -108,7 +112,7 @@ struct TimeSlider: View {
                     let clampedLocation = max(0, min(1, tapLocation))
                     let newValue = range.lowerBound + Int(clampedLocation * Double(range.upperBound - range.lowerBound))
                     let stepped = round(Double(newValue) / Double(step)) * Double(step)
-                    value = Int(stepped)
+                    value = min(range.upperBound, max(range.lowerBound, Int(stepped)))
                 }
             }
             .frame(height: 18)
@@ -129,12 +133,15 @@ struct TimeSlider: View {
     }
 
     private func formatBound(_ seconds: Int) -> String {
+        let lang = LanguageManager.shared.resolvedCode
+        let isEnglish = lang == "en"
+
         if seconds < 60 {
-            return "\(seconds)秒"
+            return isEnglish ? "\(seconds)s" : "\(seconds)秒"
         } else if seconds % 60 == 0 {
-            return "\(seconds / 60)分钟"
+            return isEnglish ? "\(seconds / 60) min" : "\(seconds / 60)分钟"
         } else {
-            return "\(seconds)秒"
+            return isEnglish ? "\(seconds)s" : "\(seconds)秒"
         }
     }
 

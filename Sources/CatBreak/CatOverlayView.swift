@@ -2,23 +2,20 @@ import SwiftUI
 
 struct CatOverlayView: View {
     @ObservedObject var state: BreakOverlayState
+    @ObservedObject var languageManager = LanguageManager.shared
 
-    /// 固定遮罩透明度（无动画）
     private var fixedOverlayOpacity: Double {
         isDarkMode ? 0.8 : 0.75
     }
 
-    /// 深色模式检测
     private var isDarkMode: Bool {
         NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
     }
 
-    /// 是否处于最后10秒
     private var isLastTenSeconds: Bool {
         state.remainingSeconds <= 10 && state.remainingSeconds > 0
     }
 
-    /// 预加载背景图片
     private static let cachedBackgroundImage: NSImage? = {
         if let path = Bundle.main.path(forResource: "catbreak", ofType: "jpg") {
             return NSImage(contentsOfFile: path)
@@ -28,7 +25,6 @@ struct CatOverlayView: View {
 
     var body: some View {
         ZStack {
-            // 背景图
             if let nsImage = Self.cachedBackgroundImage {
                 Image(nsImage: nsImage)
                     .resizable()
@@ -51,12 +47,10 @@ struct CatOverlayView: View {
                 .ignoresSafeArea()
             }
 
-            // 深色遮罩：固定透明度，无动画
             Color.black
                 .opacity(fixedOverlayOpacity)
                 .ignoresSafeArea()
 
-            // 静态柔光
             Circle()
                 .fill(
                     RadialGradient(
@@ -75,9 +69,8 @@ struct CatOverlayView: View {
             VStack(spacing: 20) {
                 Spacer()
 
-                // 第N次休息
                 if state.breakCount > 1 {
-                    Text("第 \(state.breakCount) 次休息")
+                    Text(String(format: L10n.tr("break.nth_time"), state.breakCount))
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
                         .foregroundColor(.white.opacity(0.6))
                         .padding(.horizontal, 18)
@@ -92,12 +85,10 @@ struct CatOverlayView: View {
                         )
                 }
 
-                // 猫咪图标
                 Image(systemName: "cat.fill")
                     .font(.system(size: 48))
                     .foregroundColor(.white.opacity(0.7))
 
-                // 名人语录
                 Text("「\(state.quote)」")
                     .font(.system(size: 20, weight: .medium, design: .serif))
                     .italic()
@@ -106,16 +97,14 @@ struct CatOverlayView: View {
                     .lineSpacing(6)
                     .padding(.horizontal, 48)
 
-                // 主标题 - 最后10秒时改为"马上结束"
-                Text(isLastTenSeconds ? "马上结束" : "该休息啦")
+                Text(isLastTenSeconds ? L10n.tr("break.ending_soon") : L10n.tr("break.title"))
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundColor(isLastTenSeconds ? .yellow.opacity(0.9) : .white.opacity(0.8))
 
                 Spacer()
 
-                // 倒计时
                 VStack(spacing: 8) {
-                    Text("休息倒计时")
+                    Text(L10n.tr("break.countdown"))
                         .font(.system(size: 14, weight: .medium, design: .rounded))
                         .foregroundColor(isLastTenSeconds ? .yellow.opacity(0.6) : .white.opacity(0.4))
 
@@ -136,8 +125,7 @@ struct CatOverlayView: View {
 
                 Spacer()
 
-                // 底部提示 - 最后10秒时改为提醒文字
-                Text(isLastTenSeconds ? "休息时间即将结束，准备继续工作" : "喝杯水  ·  站起来  ·  看远方  ·  想想未来")
+                Text(isLastTenSeconds ? L10n.tr("break.ending_hint") : L10n.tr("break.hint"))
                     .font(.system(size: 16, weight: .medium, design: .rounded))
                     .foregroundColor(isLastTenSeconds ? .yellow.opacity(0.5) : .white.opacity(0.35))
                     .padding(.bottom, 30)

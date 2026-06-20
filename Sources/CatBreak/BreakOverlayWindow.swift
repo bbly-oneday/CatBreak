@@ -1,11 +1,12 @@
 import AppKit
 import SwiftUI
+import Combine
 
 @MainActor
 class BreakOverlayWindow {
     private var windows: [NSWindow] = []
     private weak var timerManager: TimerManager?
-    private var countdownTimer: Timer?
+    private var countdownCancellable: AnyCancellable?
     private var breakCount: Int = 0
 
     /// 共享状态：所有屏幕的 CatOverlayView 观察同一个实例
@@ -56,8 +57,8 @@ class BreakOverlayWindow {
     }
 
     func hide() {
-        countdownTimer?.invalidate()
-        countdownTimer = nil
+        countdownCancellable?.cancel()
+        countdownCancellable = nil
 
         // 移除屏幕变化监听
         if let observer = screenChangeObserver {
@@ -120,32 +121,24 @@ class BreakOverlayWindow {
         }
     }
 
-    /// 倒计时：只更新共享状态，不替换 contentView
-    /// SwiftUI 自动根据 @Published 属性变化刷新所有屏幕上的视图
+    /// 倒计时：订阅 TimerManager 的休息剩余秒数，只更新共享状态。
+    /// SwiftUI 自动根据 @Published 属性变化刷新所有屏幕上的视图。
+    /// 归零时的隐藏由 TimerManager.endBreak → onBreakEnded → hideBreakOverlay 链路统一处理。
     private func startCountdown() {
-        countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
-            Task { @MainActor in
-                guard let self = self, let tm = self.timerManager else {
-                    timer.invalidate()
-                    return
-                }
+        guard let timerManager = timerManager else { return }
 
-                let remaining = tm.currentBreakRemaining
-
-                if remaining <= 0 {
-                    timer.invalidate()
-                    self.hide()
-                } else {
-                    // 只更新共享状态，SwiftUI 自动刷新
-                    self.overlayState.remainingSeconds = remaining
-                }
+        countdownCancellable = timerManager.breakRemainingPublisher
+            .receive(on: RunLoop.main)
+            .sink { [weak self] remaining in
+                guard let self = self else { return }
+                // 只更新共享状态，SwiftUI 自动刷新
+                self.overlayState.remainingSeconds = remaining
             }
-        }
     }
 
     deinit {
-        countdownTimer?.invalidate()
-        countdownTimer = nil
+        countdownCancellable?.cancel()
+        countdownCancellable = nil
 
         if let observer = screenChangeObserver {
             NotificationCenter.default.removeObserver(observer)

@@ -1,0 +1,68 @@
+/* CatBreak localization — English */
+
+// App info
+"app.name" = "CatBreak";
+"app.tagline" = "Healthy break reminder";
+
+// Status badge
+"status.idle" = "Idle";
+"status.monitoring" = "Monitoring";
+"status.away" = "Away";
+"status.warning" = "Break Soon";
+"status.breaking" = "Breaking";
+
+// Timer section
+"timer.usage_time" = "Usage Time";
+"timer.remaining" = "Remaining";
+"timer.progress" = "%d%%";
+
+// Settings section
+"settings.title" = "Usage Limit";
+"settings.break_duration" = "Break Duration";
+"settings.sensitive_app" = "Defer break during calls";
+"settings.sensitive_app_hint" = "Auto-defer during meetings";
+"settings.normal" = "Normal";
+"settings.defer_break" = "Deferred";
+"settings.disabled" = "Disabled";
+"settings.auto_hide_delay" = "Auto-hide Delay";
+"settings.auto_hide_delay_hint" = "Auto-hide window after popup";
+"settings.language" = "Language";
+"settings.language.system" = "System";
+"settings.language.zh" = "简体中文";
+"settings.language.en" = "English";
+
+// Bottom buttons
+"action.settings" = "Settings";
+"action.mute" = "Mute on Break";
+"action.autostart" = "Launch at Login";
+"action.quit" = "Quit";
+"action.back" = "Back";
+"action.about" = "About";
+
+// About info
+"about.title" = "CatBreak";
+"about.version" = "Version";
+"about.description" = "Healthy break reminder";
+"about.features" = "Timely break reminders for eye health";
+"about.github" = "Visit GitHub";
+
+// Break overlay
+"break.title" = "Time for a Break";
+"break.ending_soon" = "Ending Soon";
+"break.countdown" = "Break Countdown";
+"break.nth_time" = "Break #%d";
+"break.hint" = "Drink water · Stand up · Look away · Think ahead";
+"break.ending_hint" = "Break ending soon, prepare to continue";
+"break.default_quote" = "Step away from the keyboard and move around!";
+
+// Warning notification
+"warning.title" = "CatBreak Warning";
+"warning.body" = "Break in %d minutes. Save your work!";
+
+// Menu items
+"menu.settings" = "Settings…";
+"menu.about" = "About CatBreak";
+"menu.quit" = "Quit CatBreak";
+
+// Accessibility
+"accessibility.mute_unsupported" = "App Store version is sandboxed and cannot control system mute. Use the DMG version for this feature.";

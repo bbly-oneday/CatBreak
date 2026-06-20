@@ -1,0 +1,68 @@
+/* CatBreak 本地化资源 — 简体中文（基准语言） */
+
+// 应用信息
+"app.name" = "CatBreak";
+"app.tagline" = "健康休息提醒";
+
+// 状态徽章
+"status.idle" = "待机";
+"status.monitoring" = "监控中";
+"status.away" = "已离开";
+"status.warning" = "即将休息";
+"status.breaking" = "休息中";
+
+// 计时区域
+"timer.usage_time" = "本次使用时长";
+"timer.remaining" = "剩余";
+"timer.progress" = "%d%%";
+
+// 设置区域
+"settings.title" = "使用时长限额";
+"settings.break_duration" = "休息时长";
+"settings.sensitive_app" = "暂停休息事件监测";
+"settings.sensitive_app_hint" = "会议/通话时自动推迟";
+"settings.normal" = "正常";
+"settings.defer_break" = "推迟休息";
+"settings.disabled" = "已禁用";
+"settings.auto_hide_delay" = "自动隐藏延迟时间";
+"settings.auto_hide_delay_hint" = "窗口弹出后自动隐藏";
+"settings.language" = "语言";
+"settings.language.system" = "跟随系统";
+"settings.language.zh" = "简体中文";
+"settings.language.en" = "English";
+
+// 底部按钮
+"action.settings" = "设置";
+"action.mute" = "休息时静音";
+"action.autostart" = "开机自启动";
+"action.quit" = "退出";
+"action.back" = "返回";
+"action.about" = "关于";
+
+// 关于信息
+"about.title" = "CatBreak";
+"about.version" = "版本";
+"about.description" = "健康休息提醒工具";
+"about.features" = "定时提醒休息，保护用眼健康";
+"about.github" = "访问 GitHub";
+
+// 休息遮罩
+"break.title" = "该休息啦";
+"break.ending_soon" = "马上结束";
+"break.countdown" = "休息倒计时";
+"break.nth_time" = "第 %d 次休息";
+"break.hint" = "喝杯水  ·  站起来  ·  看远方  ·  想想未来";
+"break.ending_hint" = "休息时间即将结束，准备继续工作";
+"break.default_quote" = "放下键盘，起来活动一下吧！";
+
+// 预警通知
+"warning.title" = "CatBreak 预警";
+"warning.body" = "还有 %d 分钟即将开始休息，请保存工作！";
+
+// 菜单项
+"menu.settings" = "设置…";
+"menu.about" = "关于 CatBreak";
+"menu.quit" = "退出 CatBreak";
+
+// 辅助功能
+"accessibility.mute_unsupported" = "App Store 版受沙盒限制，不支持系统级静音。如需此功能请使用 DMG 版。";

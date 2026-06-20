@@ -1,0 +1,9 @@
+/*
+  InfoPlist.strings
+  CatBreak
+
+  Created for App Store compliance.
+  Localized privacy permission descriptions.
+*/
+
+"NSMicrophoneUsageDescription" = "CatBreak 仅检测麦克风是否正在被通话或会议占用，以便自动推迟休息提醒。本应用不会录制或存储任何音频。";

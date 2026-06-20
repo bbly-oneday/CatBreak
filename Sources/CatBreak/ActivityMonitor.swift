@@ -2,7 +2,7 @@ import AppKit
 import Combine
 import os.log
 
-class ActiveAppMonitor {
+class ActivityMonitor {
     private let timerManager: TimerManager
     private var pollTimer: Timer?
     private var eventMonitor: Any?
@@ -25,7 +25,7 @@ class ActiveAppMonitor {
     }
 
     func start() {
-        Logger.app.info("ActiveAppMonitor started")
+        Logger.app.info("ActivityMonitor started")
         pollTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             DispatchQueue.main.async {
                 self?.timerManager.tick()
@@ -37,7 +37,7 @@ class ActiveAppMonitor {
     }
 
     func stop() {
-        Logger.app.info("ActiveAppMonitor stopped")
+        Logger.app.info("ActivityMonitor stopped")
         pollTimer?.invalidate()
         pollTimer = nil
         if let monitor = eventMonitor {

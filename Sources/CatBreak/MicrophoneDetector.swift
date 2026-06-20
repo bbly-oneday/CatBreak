@@ -7,7 +7,7 @@ import os.log
 /// 因此只需检测系统麦克风是否被占用即可判断是否需要推迟休息。
 /// - 麦克风被占用 → 停止休息（用户正在开会/通话）
 /// - 麦克风空闲 → 正常休息
-struct SensitiveAppDetector {
+struct MicrophoneDetector {
 
     /// 检测麦克风是否正在被使用
     /// - Returns: (isActive: 是否在用麦克风, reason: 原因描述)

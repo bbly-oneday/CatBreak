@@ -31,7 +31,11 @@ class TimerManager: ObservableObject {
     var onWarning: (() -> Void)?  // 预警回调
 
     private var breakTimer: Timer?
-    private var breakRemainingSeconds: Int = 0
+
+    /// 休息剩余秒数（单一数据源）。
+    /// `@Published`：遮罩窗口订阅它刷新倒计时，无需额外计时器。
+    @Published var breakRemainingSeconds: Int = 0
+
     private var breakTickCounter: Int = 0  // 休息期间检测节流计数
 
     // 离开阈值：超过 3 分钟无操作视为离开
@@ -51,7 +55,7 @@ class TimerManager: ObservableObject {
 
     /// 检测麦克风是否正在使用
     private func checkMicrophone() -> Bool {
-        let result = SensitiveAppDetector.checkActive()
+        let result = MicrophoneDetector.checkActive()
         if result.isActive {
             sensitiveAppReason = result.reason
         } else {
@@ -181,7 +185,7 @@ class TimerManager: ObservableObject {
 
         // 休息期间每 breakCheckInterval 秒检测一次麦克风
         if breakTickCounter % breakCheckInterval == 0 {
-            let result = SensitiveAppDetector.checkActive()
+            let result = MicrophoneDetector.checkActive()
             if result.isActive {
                 sensitiveAppReason = result.reason
                 endBreak()
@@ -193,6 +197,8 @@ class TimerManager: ObservableObject {
     var currentBreakRemaining: Int {
         return breakRemainingSeconds
     }
+    /// `@Published` 投影，供遮罩窗口 Combine 订阅倒计时刷新
+    var breakRemainingPublisher: Published<Int>.Publisher { $breakRemainingSeconds }
 
     private func endBreak() {
         guard state == .breaking else { return }  // 防止重复调用

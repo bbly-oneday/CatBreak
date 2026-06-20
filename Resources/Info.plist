@@ -3,7 +3,12 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
+    <string>zh-Hans</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>zh-Hans</string>
+        <string>en</string>
+    </array>
     <key>CFBundleExecutable</key>
     <string>CatBreak</string>
     <key>CFBundleIconFile</key>
@@ -19,15 +24,17 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.5.0</string>
+    <string>3.0.0</string>
     <key>CFBundleVersion</key>
-    <string>10</string>
+    <string>1</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>LSUIElement</key>
     <true/>
     <key>NSHumanReadableCopyright</key>
     <string>Copyright 2026. All rights reserved.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>CatBreak 仅检测麦克风是否正在被通话或会议占用，以便自动推迟休息提醒。本应用不会录制或存储任何音频。</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
     <key>NSHighResolutionCapable</key>

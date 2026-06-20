@@ -3,6 +3,7 @@ import SwiftUI
 import ServiceManagement
 import UserNotifications
 import CoreAudio
+import Combine
 import os.log
 
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -17,16 +18,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var settingsWindow: NSWindow?
     private var timerManager: TimerManager!
-    private var monitor: ActiveAppMonitor?
+    private var monitor: ActivityMonitor?
     private var settingsStore: SettingsStore!
 
     // 静音相关：保存静音前每个输出设备的静音状态
     private var muteStatesBeforeBreak: [AudioObjectID: Bool] = [:]
 
+    // 静音状态持久化键（用于崩溃后恢复，仅 DMG 版）
+    private enum MutePersistence {
+        static let statesKey = "muteStatesBeforeBreak"
+        static let activeKey = "muteRestorePending"
+    }
+
+    // 自动隐藏相关
+    private var autoHideTimer: Timer?
+    private var isMouseInWindow: Bool = false
+
     // 预警通知是否已发送（避免重复）
     private var warningDelivered: Bool = false
 
+    // Combine 订阅缓存
+    private var cancellables = Set<AnyCancellable>()
+
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // 若上次在休息静音中异常退出，先恢复设备静音状态（仅 DMG 版）
+        restoreMuteStatesIfCrashed()
+
         // 请求通知权限
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
             if let error = error {
@@ -51,7 +68,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupStatusBar()
 
         // Start monitoring
-        monitor = ActiveAppMonitor(timerManager: timerManager)
+        monitor = ActivityMonitor(timerManager: timerManager)
         monitor?.start()
 
         // Observe break state for overlay
@@ -66,6 +83,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         timerManager.onWarning = { [weak self] in
             self?.showWarningNotification()
         }
+
+        // 预警状态清除时（进休息/重置/离开/预警结束）复位通知标志，
+        // 使下一轮预警能再次发送通知。替代原先基于固定延时的脆弱复位。
+        timerManager.$isWarning
+            .dropFirst()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] isWarning in
+                if !isWarning {
+                    self?.warningDelivered = false
+                }
+            }
+            .store(in: &cancellables)
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -119,14 +148,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    @MainActor
     @objc private func statusBarButtonClicked() {
         guard let event = NSApp.currentEvent else { return }
 
         if event.type == .rightMouseUp {
             let menu = NSMenu()
-            menu.addItem(NSMenuItem(title: "打开设置", action: #selector(toggleSettingsWindow), keyEquivalent: ""))
+            menu.addItem(NSMenuItem(title: L10n.tr("menu.settings"), action: #selector(toggleSettingsWindow), keyEquivalent: ","))
+            menu.addItem(NSMenuItem(title: L10n.tr("menu.about"), action: #selector(showAbout), keyEquivalent: ""))
             menu.addItem(NSMenuItem.separator())
-            menu.addItem(NSMenuItem(title: "退出", action: #selector(quitApp), keyEquivalent: "q"))
+            menu.addItem(NSMenuItem(title: L10n.tr("menu.quit"), action: #selector(quitApp), keyEquivalent: "q"))
             statusItem.menu = menu
             DispatchQueue.main.async {
                 self.statusItem.menu = nil
@@ -136,7 +167,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    @MainActor
+    @objc private func showAbout() {
+        NSApp.orderFrontStandardAboutPanel(nil)
+    }
+
     @objc private func toggleSettingsWindow() {
+        // 关闭分支：窗口可见则隐藏，保留实例以便复用（不销毁）
         if let window = settingsWindow, window.isVisible {
             window.orderOut(nil)
             return
@@ -144,31 +181,44 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // 获取状态栏按钮在屏幕上的位置
         guard let button = statusItem.button,
-              let screen = NSScreen.main else { return }
+              let buttonWindow = button.window else { return }
 
-        let buttonRect = button.window?.convertToScreen(button.convert(button.bounds, to: nil)) ?? .zero
+        // 使用按钮所在的屏幕（多显示器支持）
+        let screen = buttonWindow.screen ?? NSScreen.main!
 
-        // 创建窗口
-        let contentView = ContentView(timerManager: timerManager, settingsStore: settingsStore)
-        let hostingView = NSHostingView(rootView: contentView)
+        // 将按钮位置转换为屏幕坐标
+        let buttonRect = buttonWindow.convertToScreen(button.convert(button.bounds, to: nil))
 
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: Constants.settingsWindowWidth, height: Constants.settingsWindowHeight),
-                              styleMask: [.borderless],
-                              backing: .buffered,
-                              defer: false)
-        window.contentView = hostingView
-        window.isReleasedWhenClosed = false
-        window.level = .floating
-        window.backgroundColor = .clear
-        window.hasShadow = true
+        // 复用窗口实例：仅首次打开时创建并配置一次，后续打开直接复用
+        if settingsWindow == nil {
+            let contentView = ContentView(timerManager: timerManager, settingsStore: settingsStore)
+            let hostingView = NSHostingView(rootView: contentView)
 
-        // 设置窗口圆角
-        window.contentView?.wantsLayer = true
-        window.contentView?.layer?.cornerRadius = Constants.windowCornerRadius
-        window.contentView?.layer?.masksToBounds = true
-        window.contentView?.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+            let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: Constants.settingsWindowWidth, height: Constants.settingsWindowHeight),
+                                  styleMask: [.borderless],
+                                  backing: .buffered,
+                                  defer: false)
+            window.contentView = hostingView
+            window.isReleasedWhenClosed = false
+            window.level = .floating
+            window.backgroundColor = .clear
+            window.hasShadow = true
 
-        // 计算窗口位置：紧贴菜单栏底部，对齐图标
+            // 设置窗口圆角
+            window.contentView?.wantsLayer = true
+            window.contentView?.layer?.cornerRadius = Constants.windowCornerRadius
+            window.contentView?.layer?.masksToBounds = true
+            window.contentView?.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+
+            // 添加鼠标进入/离开监听
+            setupWindowMouseTracking(window)
+
+            settingsWindow = window
+        }
+
+        guard let window = settingsWindow else { return }
+
+        // 计算窗口位置：紧贴菜单栏底部，对齐图标（每次打开重新计算，适配屏幕变化）
         let screenFrame = screen.frame
         let windowWidth: CGFloat = Constants.settingsWindowWidth
         let windowHeight: CGFloat = Constants.settingsWindowHeight
@@ -193,10 +243,63 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         let y = screenFrame.height - menuBarHeight - windowHeight
 
-        window.setFrameOrigin(NSPoint(x: x, y: y))
+        // 先设置窗口框架，再显示（避免系统自动调整位置）
+        let targetFrame = NSRect(x: x, y: y, width: windowWidth, height: windowHeight)
+        window.setFrame(targetFrame, display: true, animate: false)
         window.makeKeyAndOrderFront(nil)
 
-        settingsWindow = window
+        // 启动自动隐藏计时器
+        startAutoHideTimer()
+    }
+
+    // MARK: - Auto-hide Timer
+
+    private func setupWindowMouseTracking(_ window: NSWindow) {
+        // 创建跟踪区域
+        let trackingArea = NSTrackingArea(
+            rect: window.contentView?.bounds ?? .zero,
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            owner: self,
+            userInfo: nil
+        )
+        window.contentView?.addTrackingArea(trackingArea)
+    }
+
+    private func startAutoHideTimer() {
+        // 取消之前的计时器
+        autoHideTimer?.invalidate()
+
+        // 启动新计时器
+        let delay = TimeInterval(settingsStore.autoHideDelaySeconds)
+        autoHideTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.hideWindowIfNeeded()
+            }
+        }
+    }
+
+    private func hideWindowIfNeeded() {
+        // 如果鼠标在窗口内，不隐藏
+        guard !isMouseInWindow else { return }
+
+        // 如果窗口可见，隐藏
+        if let window = settingsWindow, window.isVisible {
+            window.orderOut(nil)
+        }
+    }
+
+    // 鼠标进入窗口
+    private func mouseEntered() {
+        isMouseInWindow = true
+        // 暂停自动隐藏
+        autoHideTimer?.invalidate()
+    }
+
+    // 鼠标离开窗口
+    private func mouseExited() {
+        isMouseInWindow = false
+        // 重新开始计时
+        startAutoHideTimer()
     }
 
     @MainActor
@@ -206,13 +309,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Warning Notification
 
+    @MainActor
     private func showWarningNotification() {
         guard !warningDelivered else { return }
         warningDelivered = true
 
         let content = UNMutableNotificationContent()
-        content.title = "CatBreak 预警"
-        content.body = "还有 \(timerManager.warningAdvanceSeconds / 60) 分钟即将开始休息，请保存工作！"
+        content.title = L10n.tr("warning.title")
+        content.body = String(format: L10n.tr("warning.body"), timerManager.warningAdvanceSeconds / 60)
         content.sound = .default
 
         let request = UNNotificationRequest(
@@ -226,11 +330,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 Logger.app.error("Warning notification error: \(error)")
             }
         }
-
-        // 休息开始后重置
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double(timerManager.warningAdvanceSeconds + 10)) { [weak self] in
-            self?.warningDelivered = false
-        }
+        // warningDelivered 的复位由 isWarning 状态订阅统一处理（见 applicationDidFinishLaunching）
     }
 
     // MARK: - Break Overlay
@@ -240,8 +340,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func showBreakOverlay() {
         warningDelivered = false
 
-        // 休息时静音（CoreAudio 直接控制）
-        if settingsStore.muteOnBreak {
+        // 休息时静音（CoreAudio 直接控制）——仅 DMG 版支持
+        if settingsStore.muteOnBreak && MuteCapability.isSupported {
             muteAllOutputDevices()
         }
 
@@ -254,7 +354,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func hideBreakOverlay() {
         // 恢复音量
-        if settingsStore.muteOnBreak {
+        if settingsStore.muteOnBreak && MuteCapability.isSupported {
             restoreMuteStates()
         }
 
@@ -363,6 +463,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
+
+        // 持久化：若进程在休息中崩溃/被强杀，下次启动可据以恢复静音状态
+        persistMuteStates()
     }
 
     /// 恢复所有输出设备的静音状态
@@ -374,5 +477,44 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         muteStatesBeforeBreak.removeAll()
+
+        // 已正常恢复，清除崩溃恢复标记
+        clearPersistedMuteStates()
+    }
+
+    // MARK: - 静音状态持久化（崩溃恢复，仅 DMG 版有效）
+
+    /// 把静音前状态写入 UserDefaults，并置待恢复标记
+    private func persistMuteStates() {
+        // [AudioObjectID( UInt32 ): Bool] -> [String: Bool]
+        let dict = muteStatesBeforeBreak.reduce(into: [String: Bool]()) { result, entry in
+            result[String(entry.key)] = entry.value
+        }
+        UserDefaults.standard.set(dict, forKey: MutePersistence.statesKey)
+        UserDefaults.standard.set(true, forKey: MutePersistence.activeKey)
+    }
+
+    /// 清除持久化的静音状态与标记
+    private func clearPersistedMuteStates() {
+        UserDefaults.standard.removeObject(forKey: MutePersistence.statesKey)
+        UserDefaults.standard.removeObject(forKey: MutePersistence.activeKey)
+    }
+
+    /// 启动时检测上次是否在休息静音中异常退出，若是则恢复设备静音状态
+    /// 仅在支持系统级静音的构建（DMG 版）下执行
+    private func restoreMuteStatesIfCrashed() {
+        guard MuteCapability.isSupported else { return }
+        guard UserDefaults.standard.bool(forKey: MutePersistence.activeKey) else { return }
+
+        Logger.app.info("Detected unfinished mute restore from previous run, restoring device mute states")
+        if let dict = UserDefaults.standard.dictionary(forKey: MutePersistence.statesKey) as? [String: Bool] {
+            for (key, wasMuted) in dict {
+                guard let deviceID = AudioObjectID(key) else { continue }
+                if !wasMuted {
+                    _ = setDeviceMuteState(deviceID, muted: false)
+                }
+            }
+        }
+        clearPersistedMuteStates()
     }
 }
