@@ -1,6 +1,10 @@
 # CatBreak
 
 <p align="center">
+  <a href="README.md">简体中文</a> | <a href="README_EN.md">English</a>
+</p>
+
+<p align="center">
   <img src="Resources/Assets.xcassets/AppIcon.appiconset/icon_128x128@2x.png" alt="CatBreak Logo" width="128">
 </p>
 
