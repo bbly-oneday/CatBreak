@@ -44,7 +44,7 @@
 ### Break Overlay
 
 <p align="center">
-  <img src="image/ZH3.jpg" alt="Break Overlay" width="600">
+  <img src="image/EN3.jpg" alt="Break Overlay" width="600">
 </p>
 
 ---
