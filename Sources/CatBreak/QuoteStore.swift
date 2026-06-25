@@ -59,9 +59,20 @@ struct QuoteStore {
     static private var shuffledQuotes: [String] = []
     /// 当前取语录的索引
     static private var currentIndex: Int = 0
+    /// 上次加载语录时的语言代码，用于检测语言切换
+    static private var lastLanguageCode: String?
 
     /// 使用洗牌算法获取一条语录，确保短期内不重复
     static func random() -> String {
+        let currentLang = LanguageManager.shared.resolvedCode
+
+        // 如果语言切换了，清空之前的洗牌列表，强制重新加载
+        if lastLanguageCode != currentLang {
+            shuffledQuotes = []
+            currentIndex = 0
+            lastLanguageCode = currentLang
+        }
+
         guard !quotes.isEmpty else {
             return L10n.tr("break.default_quote")
         }

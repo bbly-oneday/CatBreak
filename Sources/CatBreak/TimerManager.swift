@@ -110,11 +110,16 @@ class TimerManager: ObservableObject {
             elapsedSeconds += 1
 
             // 持续检测麦克风状态（每 microphoneCheckInterval 秒检测一次）
-            if elapsedSeconds % microphoneCheckInterval == 0 {
+            // 只有开启监测功能时才检测
+            if settingsStore.enableSensitiveAppDetection && elapsedSeconds % microphoneCheckInterval == 0 {
                 isInSensitiveApp = checkMicrophone()
                 if isInSensitiveApp {
                     Logger.timer.debug("tick: Sensitive app detected - \(self.sensitiveAppReason ?? "unknown")")
                 }
+            } else if !settingsStore.enableSensitiveAppDetection && isInSensitiveApp {
+                // 如果关闭了监测，确保状态重置
+                isInSensitiveApp = false
+                sensitiveAppReason = nil
             }
 
             let remainingToLimit = settingsStore.usageLimitSeconds - elapsedSeconds
